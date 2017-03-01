@@ -26,33 +26,22 @@ img::EasyImage draw2DLines(Lines2D &lines, const int &size, const img::Color &bc
     double minY = lines[0].p1.y;
     // Iterate over all lines looking for xmax and ymax
     for(Line2D &l : lines){
-        double p1X = l.p1.x;
-        double p2X = l.p2.x;
-        double p1Y = l.p1.y;
-        double p2Y = l.p2.y;
-        if(p1X>maxX)
-            maxX = p1X;
-        if(p1X<minX)
-            minX = p1X;
-        if(p2X>maxX)
-            maxX = p2X;
-        if(p2X<minX)
-            minX = p2X;
-        if(p1Y>maxY)
-            maxY = p1Y;
-        if(p1Y<minY)
-            minY = p1Y;
-        if(p2Y>maxY)
-            maxY = p2Y;
-        if(p2Y<minY)
-            minY = p2Y;
+        if(l.p1.x>maxX) maxX = l.p1.x;
+        if(l.p1.x<minX) minX = l.p1.x;
+        if(l.p2.x>maxX) maxX = l.p2.x;
+        if(l.p2.x<minX) minX = l.p2.x;
+        if(l.p1.y>maxY) maxY = l.p1.y;
+        if(l.p1.y<minY) minY = l.p1.y;
+        if(l.p2.y>maxY) maxY = l.p2.y;
+        if(l.p2.y<minY) minY = l.p2.y;
     }
     // Ranges
     double xRange = maxX - minX;
     double yRange = maxY - minY;
     // Size of image (width, height)
-    double imageX = size * (xRange / std::max(xRange, yRange));
-    double imageY = size * (yRange / std::max(xRange, yRange));
+    double maxXY = std::max(xRange, yRange);
+    double imageX = size * (xRange / maxXY);
+    double imageY = size * (yRange / maxXY);
     // Scaling factor d
     double d = 0.95 * (imageX / xRange);
     // Centers
@@ -79,23 +68,21 @@ img::EasyImage draw2DLines(Lines2D &lines, const int &size, const img::Color &bc
         unsigned int y0 = roundToInt(l.p1.y);
         unsigned int x1 = roundToInt(l.p2.x);
         unsigned int y1 = roundToInt(l.p2.y);
-        img::Color lc (l.color.red*255, l.color.green*255, l.color.blue*255);
-        image.draw_line(x0, y0, x1, y1, lc);
+        image.draw_line(x0, y0, x1, y1, l.color);
     }
     return image;
 }
 
-Point2D doProjection(const Vector3D &point, const double d=1.0){
+Point2D doProjection(const Vector3D &point, const double &d=1.0){
     Point2D p;
     p.x = (d * point.x) / -(point.z);
     p.y = (d * point.y) / -(point.z);
     return p;
 }
 
-Lines2D doProjection(const Figures3D &figures){
+Lines2D doProjection(Figures3D &figures){
     Lines2D lines;
-    for (Figure fig : figures){
-        Color color(fig.color.red/255.0, fig.color.green/255.0, fig.color.blue/255.0);
+    for (Figure &fig : figures){
         for (Face &face : fig.faces){
             Point2D p1;
             Point2D p2;
@@ -104,7 +91,7 @@ Lines2D doProjection(const Figures3D &figures){
             Line2D line;
             line.p1 = p1;
             line.p2 = p2;
-            line.color = color;
+            line.color = fig.color;
             lines.push_back(line);
         }
     }
@@ -245,7 +232,8 @@ img::EasyImage L2DSystem(const ini::Configuration &configuration){
     const double size = configuration["General"]["size"].as_double_or_die();
     const std::vector<double> bcVector = configuration["General"]["backgroundcolor"].as_double_tuple_or_die();
     img::Color bc(bcVector[0]*255, bcVector[1]*255, bcVector[2]*255);
-    const std::vector<double> lc = configuration["2DLSystem"]["color"].as_double_tuple_or_die();
+    const std::vector<double> lcVector = configuration["2DLSystem"]["color"].as_double_tuple_or_die();
+    img::Color lc(lcVector[0]*255, lcVector[1]*255, lcVector[2]*255);
     std::string inf = configuration["2DLSystem"]["inputfile"];
     // Create 2D L-system
     LParser::LSystem2D l_system;
@@ -297,8 +285,7 @@ img::EasyImage L2DSystem(const ini::Configuration &configuration){
             x += std::cos(alph_angle);
             y += std::sin(alph_angle);
             Point2D p2 (x, y);
-            Color lcObj (lc[0], lc[1], lc[2]);
-            Line2D line(p1, p2, lcObj);
+            Line2D line(p1, p2, lc);
             lines.push_back(line);
         } else {
             x += std::cos(alph_angle);
@@ -314,7 +301,7 @@ img::EasyImage Wireframe(const ini::Configuration &configuration){
     double size = general["size"].as_double_or_die();
     std::vector<double> bcDub = general["backgroundcolor"].as_double_tuple_or_die();
     img::Color bc(bcDub[0]*255, bcDub[1]*255, bcDub[2]*255);
-    int nrFig = general["nrFigures"];
+    int nrFig = general["nrFigures"].as_int_or_die();
     std::vector<double> e = general["eye"].as_double_tuple_or_die();
     Vector3D eye = Vector3D::point(e[0], e[1], e[2]);
     // Vector3D trans = Vector3D::vector(0, 0, -e[2]);
@@ -327,7 +314,7 @@ img::EasyImage Wireframe(const ini::Configuration &configuration){
         double rotZang = (figure["rotateZ"].as_double_or_die() / 360.0) * 2*PI;
         double scale = figure["scale"].as_double_or_die();
         std::vector<double> cen = figure["center"].as_double_tuple_or_die();
-        Vector3D center = Vector3D::point(cen[0], cen[1], cen[2]);
+        Vector3D center = Vector3D::vector(cen[0], cen[1], cen[2]);
         std::vector<double> col = figure["color"].as_double_tuple_or_die();
         img::Color color(col[0]*255, col[1]*255, col[2]*255);
         int nrPoints = figure["nrPoints"].as_int_or_die();
@@ -343,22 +330,20 @@ img::EasyImage Wireframe(const ini::Configuration &configuration){
         }
 
         for (int j=0; j<nrLines; j++){
-            std::vector<double> p = figure["line" + std::to_string(j)].as_double_tuple_or_die();
+            std::vector<int> p = figure["line" + std::to_string(j)].as_int_tuple_or_die();
             Face f;
-            for (double d : p){
-                f.point_indexes.push_back(roundToInt(d));
+            for (int k : p){
+                f.point_indexes.push_back(k);
             }
             faces.push_back(f);
         }
+        Matrix sclM = scaleFigure(scale);
         Matrix rotX = rotateX(rotXang);
         Matrix rotY = rotateY(rotYang);
         Matrix rotZ = rotateZ(rotZang);
-        Matrix sclM = scaleFigure(scale);
+        // Matrix trsM = translate(center);
         Matrix eyeT = eyePointTrans(eye);
-        Matrix V = rotX * rotY * rotZ * sclM * eyeT;
-        // TESTING
-        // Matrix trsM = translate(trans);
-        // Matrix V = eyeT;
+        Matrix V = sclM * rotX * rotY * rotZ * /* trsM * */ eyeT;
         Figure fig;
         fig.points = points;
         fig.faces = faces;

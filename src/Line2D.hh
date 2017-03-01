@@ -7,16 +7,7 @@
 
 #include <iostream>
 #include <vector>
-
-class Color{
-public:
-    double red;
-    double green;
-    double blue;
-
-    Color(){};
-    Color(double r, double g, double b){Color::red=r; Color::green=g; Color::blue=b;};
-};
+#include "easy_image.hh"
 
 class Point2D{
 public:
@@ -31,10 +22,10 @@ class Line2D{
 public:
     Point2D p1;
     Point2D p2;
-    Color color;
+    img::Color color;
 
     Line2D(){};
-    Line2D(Point2D p1, Point2D p2, Color c=Color(0, 0, 0)){Line2D::p1=p1; Line2D::p2=p2; Line2D::color=c;};
+    Line2D(Point2D p1, Point2D p2, img::Color c = img::Color(0, 0, 0)){Line2D::p1=p1; Line2D::p2=p2; Line2D::color=c;};
 };
 
 typedef std::vector<Line2D> Lines2D;

@@ -60,14 +60,14 @@ void toPolar(const Vector3D &point,
                             double &theta,
                             double &phi){
     // Original coordinates
-    double x = point.x;
-    double y = point.y;
-    double z = point.z;
+    // double x = point.x;
+    // double y = point.y;
+    // double z = point.z;
     // Distance to eye
-    r = std::sqrt(x*x + y*y + z*z);
+    r = std::sqrt(point.x*point.x + point.y*point.y + point.z*point.z);
     // Angles
-    theta = std::atan2(y, x);
-    phi = std::acos(z/r);
+    theta = std::atan2(point.y, point.x);
+    phi = std::acos(point.z/r);
 };
 
 Matrix eyePointTrans(const Vector3D &eyepoint){
