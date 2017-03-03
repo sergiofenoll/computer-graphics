@@ -9,6 +9,8 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <stdlib.h>
+#include <time.h>
 #include <stack>
 
 const double PI = std::atan(1.0) * 4;
@@ -38,6 +40,8 @@ img::EasyImage draw2DLines(Lines2D &lines, const int &size, const img::Color &bc
     // Ranges
     double xRange = maxX - minX;
     double yRange = maxY - minY;
+    if ((int)xRange==0) xRange = 1;
+    if ((int)yRange==0) yRange = 1;
     // Size of image (width, height)
     double maxXY = std::max(xRange, yRange);
     double imageX = size * (xRange / maxXY);
@@ -228,7 +232,7 @@ img::EasyImage IntroLines(const ini::Configuration &configuration){
 
 img::EasyImage L2DSystem(const ini::Configuration &configuration){
     // TODO: Implement stochastic L systems
-
+    std::string type = configuration["General"]["type"].as_string_or_die();
     const double size = configuration["General"]["size"].as_double_or_die();
     const std::vector<double> bcVector = configuration["General"]["backgroundcolor"].as_double_tuple_or_die();
     img::Color bc(bcVector[0]*255, bcVector[1]*255, bcVector[2]*255);
@@ -238,6 +242,7 @@ img::EasyImage L2DSystem(const ini::Configuration &configuration){
     // Create 2D L-system
     LParser::LSystem2D l_system;
     std::ifstream input_stream(inf);
+    if (type=="2DLSystemStoch") l_system.setStoch(true);
     input_stream >> l_system;
     input_stream.close();
     // Get values from 2D L-system
@@ -260,6 +265,7 @@ img::EasyImage L2DSystem(const ini::Configuration &configuration){
         }
         print_string = temp_string;
     }
+    temp_string = "";
     // Draw lines based on print_string
     Lines2D lines;
     double x = 0; // Starting x coordinate
@@ -364,7 +370,7 @@ img::EasyImage generate_image(const ini::Configuration &configuration){
         return IntroBlocks(configuration);
     } else if(type=="IntroLines"){
         return IntroLines(configuration);
-    } else if(type=="2DLSystem"){
+    } else if(type=="2DLSystem"||type=="2DLSystemStoch"){
         return L2DSystem(configuration);
     } else if (type=="Wireframe")
         return Wireframe(configuration);
@@ -373,6 +379,7 @@ img::EasyImage generate_image(const ini::Configuration &configuration){
 }
 
 int main(int argc, char const* argv[]){
+    std::srand(time(NULL)); // Random seed
     int retVal = 0;
     try{
         for(int i = 1; i < argc; ++i){

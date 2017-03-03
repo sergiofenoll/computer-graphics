@@ -57,6 +57,7 @@ namespace
 			unsigned int col;
 			bool endOfLineRead;
 		public:
+            void setbackChar() {stream_parser::col--;}
 			stream_parser(std::istream&stream) :
 				in(stream), ex(stream, std::istream::failbit | std::istream::badbit), line(1), col(0), endOfLineRead(false)
 			{
@@ -118,7 +119,8 @@ namespace
 			}
 			std::string readQuotedString()
 			{
-				if (((char) getChar()) != '"')
+				char ch = getChar();
+				if (ch != '"')
 					throw LParser::ParserException("Did not find expected string char:'\"'", line, col);
 				std::string value("");
 				for (std::istream::int_type c = getChar(); c != '"'; c = getChar())
@@ -342,7 +344,7 @@ namespace
 		}
 		return num_parenthesis == 0;
 	}
-	void parse_rules(std::set<char> const& alphabet, std::map<char, std::string>& rules, stream_parser& parser, bool parse2D)
+	void parse_rules(std::set<char> const& alphabet, std::map<char, std::map<std::vector<double>, std::vector<std::string>>> &rules, stream_parser& parser, bool parse2D, bool isStoch)
 	{
 		parser.skip_comments_and_whitespace();
 		parser.assertChars("Rules");
@@ -365,18 +367,66 @@ namespace
 			parser.skip_comments_and_whitespace();
 			parser.assertChars("->");
 			parser.skip_comments_and_whitespace();
-			std::string rule = parser.readQuotedString();
-			if (!isValidRule(alphabet, rule, parse2D))
-				throw LParser::ParserException(std::string("Invalid rule specification for entry '") + alphabet_char + "' in rule specification", parser.getLine(), parser.getCol());
-			rules[alphabet_char] = rule;
-			parser.skip_comments_and_whitespace();
-			c = parser.getChar();
-			if (c == '}')
-				break;
-			else if (c != ',')
-				throw LParser::ParserException("Expected ','", parser.getLine(), parser.getCol());
-			parser.skip_comments_and_whitespace();
-			c = parser.getChar();
+            std::vector<std::string> ruleset;
+            std::vector<double> odds;
+            std::map<std::vector<double>, std::vector<std::string>> stoch;
+                if (isStoch) {
+				// This is a stochastic L-system
+                parser.assertChars("{");
+                parser.skip_comments_and_whitespace();
+                while (true) {
+                    std::string rule = parser.readQuotedString();
+    				if (!isValidRule(alphabet, rule, parse2D))
+    					throw LParser::ParserException(std::string("Invalid rule specification for entry '") + alphabet_char + "' in rule specification", parser.getLine(), parser.getCol());
+                    ruleset.push_back(rule);
+                    c = parser.getChar();
+                    if (c==',')
+                        parser.skip_comments_and_whitespace();
+                    else
+                        break;
+                }
+                parser.skip_comments_and_whitespace();
+                parser.assertChars("->");
+                parser.skip_comments_and_whitespace();
+                parser.assertChars("{");
+                parser.skip_comments_and_whitespace();
+                while (true) {
+                    double odd = parser.readDouble();
+                    odds.push_back(odd);
+                    c = parser.getChar();
+                    if (c==',')
+                        parser.skip_comments_and_whitespace();
+                    else
+                        break;
+                }
+                stoch[odds] = ruleset;
+                rules[alphabet_char] = stoch;
+                parser.skip_comments_and_whitespace();
+				c = parser.getChar();
+				if (c == '}')
+					break;
+				else if (c != ',')
+					throw LParser::ParserException("Expected ','", parser.getLine(), parser.getCol());
+				parser.skip_comments_and_whitespace();
+				c = parser.getChar();
+			}
+            else {
+                std::string rule = parser.readQuotedString();
+				if (!isValidRule(alphabet, rule, parse2D))
+					throw LParser::ParserException(std::string("Invalid rule specification for entry '") + alphabet_char + "' in rule specification", parser.getLine(), parser.getCol());
+                ruleset.push_back(rule);
+                odds.push_back(1.0);
+                stoch[odds] = ruleset;
+                rules[alphabet_char] = stoch;
+				parser.skip_comments_and_whitespace();
+				c = parser.getChar();
+				if (c == '}')
+					break;
+				else if (c != ',')
+					throw LParser::ParserException("Expected ','", parser.getLine(), parser.getCol());
+				parser.skip_comments_and_whitespace();
+				c = parser.getChar();
+			}
 		}
 	}
 	std::string parse_initiator(std::set<char> const& alphabet, stream_parser& parser, bool parse2D)
@@ -486,7 +536,18 @@ bool LParser::LSystem::draw(char c) const
 std::string const& LParser::LSystem::get_replacement(char c) const
 {
 	assert(get_alphabet().find(c) != get_alphabet().end());
-	return replacementrules.find(c)->second;
+    const std::map<std::vector<double>, std::vector<std::string>> &stoch = replacementrules.at(c); // THIS FUCKING CODE, I SWEAR
+    const std::vector<double> &odds = stoch.begin()->first;
+    const std::vector<std::string> &ruleset = stoch.at(odds);
+	if (ruleset.size()==1) return ruleset[0];
+    double acc = 0;
+    double r = ((double) std::rand()) / RAND_MAX;
+    for (unsigned int i=0; i<odds.size(); i++) {
+        if (odds[i] + acc > r) {
+            // We found the right odd, i.e., it's inside the sufficiently small bounds [r-0.05, r+0.05]
+            return ruleset[i];
+        } else acc += odds[i];
+    }
 }
 double LParser::LSystem::get_angle() const
 {
@@ -540,7 +601,7 @@ std::istream& LParser::operator>>(std::istream& in, LParser::LSystem2D& system)
 	stream_parser parser(in);
 	parse_alphabet(system.alphabet, parser);
 	parse_draw(system.alphabet, system.drawfunction, parser);
-	parse_rules(system.alphabet, system.replacementrules, parser, true);
+	parse_rules(system.alphabet, system.replacementrules, parser, true, system.getStoch());
 	system.initiator = parse_initiator(system.alphabet, parser, true);
 	system.angle = parse_angle(parser, "Angle");
 	system.startingAngle = parse_angle(parser, "StartingAngle");
@@ -560,7 +621,7 @@ std::istream& LParser::operator>>(std::istream&in, LParser::LSystem3D& system)
 	stream_parser parser(in);
 	parse_alphabet(system.alphabet, parser);
 	parse_draw(system.alphabet, system.drawfunction, parser);
-	parse_rules(system.alphabet, system.replacementrules, parser, false);
+	parse_rules(system.alphabet, system.replacementrules, parser, false, false);
 	system.initiator = parse_initiator(system.alphabet, parser, false);
 	system.angle = parse_angle(parser, "Angle");
 
