@@ -21,6 +21,70 @@ inline int roundToInt(double d){
     return d<0 ? (int)std::ceil(d-0.5) : (int)std::floor(d+0.5);
 }
 
+void recursivePrintString(LParser::LSystem2D &l_system,
+                          std::string &print_string,
+                          unsigned int &cur_it,
+                          unsigned int &max_it,
+                          double &alph_angle, double &delt_angle,
+                          Lines2D &lines,
+                          std::stack<double> &brStack,
+                          img::Color &lc,
+                          double &x, double &y){
+    for (char &c : print_string){
+        // Iterate over characters of string
+        if (cur_it < max_it) {
+            // Recursion ahead!
+            if (c=='+') alph_angle += delt_angle;
+            else if (c=='-') alph_angle -= delt_angle;
+            else if (c=='(') {
+                brStack.push(x);
+                brStack.push(y);
+                brStack.push(alph_angle);
+            } else if (c==')') {
+                alph_angle = brStack.top();
+                brStack.pop();
+                y = brStack.top();
+                brStack.pop();
+                x = brStack.top();
+                brStack.pop();
+            } else {
+                std::string repl = l_system.get_replacement(c);
+                recursivePrintString(l_system, repl, ++cur_it, max_it,
+                                     alph_angle, delt_angle,
+                                     lines, brStack, lc, x, y);
+            }
+        }
+        else {
+            // You have reached max iterations
+            if (c=='+') alph_angle += delt_angle;
+            else if (c=='-') alph_angle -= delt_angle;
+            else if (c=='(') {
+                brStack.push(x);
+                brStack.push(y);
+                brStack.push(alph_angle);
+            } else if (c==')') {
+                alph_angle = brStack.top();
+                brStack.pop();
+                y = brStack.top();
+                brStack.pop();
+                x = brStack.top();
+                brStack.pop();
+            } else if (l_system.draw(c)) {
+                Point2D p1 (x, y);
+                x += std::cos(alph_angle);
+                y += std::sin(alph_angle);
+                Point2D p2 (x, y);
+                Line2D line(p1, p2, lc);
+                lines.push_back(line);
+            } else {
+                x += std::cos(alph_angle);
+                y += std::sin(alph_angle);
+            }
+        }
+    }
+    --cur_it;
+}
+
 img::EasyImage draw2DLines(Lines2D &lines, const int &size, const img::Color &bc=img::Color(255, 255, 255)){
     double maxX = lines[0].p1.x;
     double maxY = lines[0].p1.y;
@@ -231,7 +295,6 @@ img::EasyImage IntroLines(const ini::Configuration &configuration){
 }
 
 img::EasyImage L2DSystem(const ini::Configuration &configuration){
-    // TODO: Implement stochastic L systems
     std::string type = configuration["General"]["type"].as_string_or_die();
     const double size = configuration["General"]["size"].as_double_or_die();
     const std::vector<double> bcVector = configuration["General"]["backgroundcolor"].as_double_tuple_or_die();
@@ -248,56 +311,18 @@ img::EasyImage L2DSystem(const ini::Configuration &configuration){
     // Get values from 2D L-system
     std::set<char> alph = l_system.get_alphabet();
     std::string init = l_system.get_initiator();
-    const unsigned int iter = l_system.get_nr_iterations();
+    unsigned int max_it = l_system.get_nr_iterations();
     double alph_angle = (l_system.get_starting_angle() / 360.0) * 2*PI;
-    const double delt_angle = (l_system.get_angle() / 360.0) * 2*PI;
-    // Create string
-    std::string print_string = init;
-    std::string temp_string = "";
-    for(uint8_t i=0; i<iter; i++){
-        temp_string = "";
-        for(const char c : print_string){
-            if(alph.find(c)!=alph.end()){
-                temp_string += l_system.get_replacement(c);
-            } else if (c=='+'||c=='-'||c=='('||c==')') {
-                temp_string += c;
-            }
-        }
-        print_string = temp_string;
-    }
-    temp_string = "";
-    // Draw lines based on print_string
+    double delt_angle = (l_system.get_angle() / 360.0) * 2*PI;
+
     Lines2D lines;
-    double x = 0; // Starting x coordinate
-    double y = 0; // Starting y coordinate
-    // For brackets
-    std::stack<double> brStack; // Brackets Stack
-    for (char c : print_string) {
-        if (c=='+') alph_angle += delt_angle;
-        else if (c=='-') alph_angle -= delt_angle;
-        else if (c=='(') {
-            brStack.push(x);
-            brStack.push(y);
-            brStack.push(alph_angle);
-        } else if (c==')') {
-            alph_angle = brStack.top();
-            brStack.pop();
-            y = brStack.top();
-            brStack.pop();
-            x = brStack.top();
-            brStack.pop();
-        } else if (l_system.draw(c)) {
-            Point2D p1 (x, y);
-            x += std::cos(alph_angle);
-            y += std::sin(alph_angle);
-            Point2D p2 (x, y);
-            Line2D line(p1, p2, lc);
-            lines.push_back(line);
-        } else {
-            x += std::cos(alph_angle);
-            y += std::sin(alph_angle);
-        }
-    }
+    std::stack<double> brStack;
+    unsigned int cur_it = 0;
+    double x = 0;
+    double y = 0;
+    recursivePrintString(l_system, init, cur_it, max_it,
+                         alph_angle, delt_angle, lines, brStack, lc, x, y);
+
     img::EasyImage image = draw2DLines(lines, size, bc);
     return image;
 };
