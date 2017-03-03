@@ -40,8 +40,8 @@ img::EasyImage draw2DLines(Lines2D &lines, const int &size, const img::Color &bc
     // Ranges
     double xRange = maxX - minX;
     double yRange = maxY - minY;
-    if ((int)xRange==0) xRange = 1;
-    if ((int)yRange==0) yRange = 1;
+    // if ((int)xRange==0) xRange = 1;
+    // if ((int)yRange==0) yRange = 1;
     // Size of image (width, height)
     double maxXY = std::max(xRange, yRange);
     double imageX = size * (xRange / maxXY);
