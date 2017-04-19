@@ -13,158 +13,31 @@
 #include <time.h>
 #include <stack>
 
-const double PI = std::atan(1.0) * 4;
-
 // Helper functions
 
 inline int roundToInt(double d){
-    return d<0 ? (int)std::ceil(d-0.5) : (int)std::floor(d+0.5);
+    return d<0 ? std::ceil(d-0.5) : std::floor(d+0.5);
 }
 
-void recursivePrintString(LParser::LSystem2D &l_system,
-                          std::string &print_string,
-                          unsigned int &cur_it,
-                          unsigned int &max_it,
-                          double &alph_angle, double &delt_angle,
-                          Lines2D &lines,
-                          std::stack<double> &brStack,
-                          img::Color &lc,
-                          double &x, double &y){
-    for (char &c : print_string){
-        // Iterate over characters of string
-        if (cur_it < max_it) {
-            // Recursion ahead!
-            if (c=='+') alph_angle += delt_angle;
-            else if (c=='-') alph_angle -= delt_angle;
-            else if (c=='(') {
-                brStack.push(x);
-                brStack.push(y);
-                brStack.push(alph_angle);
-            } else if (c==')') {
-                alph_angle = brStack.top();
-                brStack.pop();
-                y = brStack.top();
-                brStack.pop();
-                x = brStack.top();
-                brStack.pop();
-            } else {
-                std::string repl = l_system.get_replacement(c);
-                recursivePrintString(l_system, repl, ++cur_it, max_it,
-                                     alph_angle, delt_angle,
-                                     lines, brStack, lc, x, y);
-            }
-        }
-        else {
-            // You have reached max iterations
-            if (c=='+') alph_angle += delt_angle;
-            else if (c=='-') alph_angle -= delt_angle;
-            else if (c=='(') {
-                brStack.push(x);
-                brStack.push(y);
-                brStack.push(alph_angle);
-            } else if (c==')') {
-                alph_angle = brStack.top();
-                brStack.pop();
-                y = brStack.top();
-                brStack.pop();
-                x = brStack.top();
-                brStack.pop();
-            } else if (l_system.draw(c)) {
-                Point2D p1 (x, y);
-                x += std::cos(alph_angle);
-                y += std::sin(alph_angle);
-                Point2D p2 (x, y);
-                Line2D line(p1, p2, lc);
-                lines.push_back(line);
-            } else {
-                x += std::cos(alph_angle);
-                y += std::sin(alph_angle);
-            }
+img::Color colorGradient(img::Color &a, img::Color &b, double &t){
+    return img::Color(
+        roundToInt(a.red + (b.red - a.red) * t),
+        roundToInt(a.green + (b.green - a.green) * t),
+        roundToInt(a.blue + (b.blue - a.blue) * t));
+}
+
+void gradientBg(img::EasyImage &image, img::Color &a, img::Color &b){
+    for (unsigned int x=0; x<image.get_width(); x++){
+        for (unsigned int y=0; y<image.get_height(); y++){
+            double p = x / (image.get_width() - 1.0);
+            image(x,y).red = roundToInt((1 - p) * a.red + p * b.red + 0.5);
+            image(x,y).green = roundToInt((1 - p) * a.green + p * b.green + 0.5);
+            image(x,y).blue = roundToInt((1 - p) * a.blue + p * b.blue + 0.5);
         }
     }
-    --cur_it;
 }
 
-img::EasyImage draw2DLines(Lines2D &lines, const int &size, const img::Color &bc=img::Color(255, 255, 255)){
-    double maxX = lines[0].p1.x;
-    double maxY = lines[0].p1.y;
-    double minX = lines[0].p1.x;
-    double minY = lines[0].p1.y;
-    // Iterate over all lines looking for xmax and ymax
-    for(Line2D &l : lines){
-        if(l.p1.x>maxX) maxX = l.p1.x;
-        if(l.p1.x<minX) minX = l.p1.x;
-        if(l.p2.x>maxX) maxX = l.p2.x;
-        if(l.p2.x<minX) minX = l.p2.x;
-        if(l.p1.y>maxY) maxY = l.p1.y;
-        if(l.p1.y<minY) minY = l.p1.y;
-        if(l.p2.y>maxY) maxY = l.p2.y;
-        if(l.p2.y<minY) minY = l.p2.y;
-    }
-    // Ranges
-    double xRange = maxX - minX;
-    double yRange = maxY - minY;
-    // if ((int)xRange==0) xRange = 1;
-    // if ((int)yRange==0) yRange = 1;
-    // Size of image (width, height)
-    double maxXY = std::max(xRange, yRange);
-    double imageX = size * (xRange / maxXY);
-    double imageY = size * (yRange / maxXY);
-    // Scaling factor d
-    double d = 0.95 * (imageX / xRange);
-    // Centers
-    double DCx = d * ((minX + maxX) / 2);
-    double DCy = d * ((minY + maxY) / 2);
-    double dx = (imageX / 2) - DCx;
-    double dy = (imageY / 2) - DCy;
-    // Multply every coordinate with d,
-    // add dx and dy
-    // and draw lines
-    img::EasyImage image(roundToInt(imageX), roundToInt(imageY), bc);
-    for(Line2D &l : lines){
-        // Update the coordinates
-        l.p1.x *= d;
-        l.p1.x += dx;
-        l.p2.x *= d;
-        l.p2.x += dx;
-        l.p1.y *= d;
-        l.p1.y += dy;
-        l.p2.y *= d;
-        l.p2.y += dy;
-        // Start drawing the lines
-        unsigned int x0 = roundToInt(l.p1.x);
-        unsigned int y0 = roundToInt(l.p1.y);
-        unsigned int x1 = roundToInt(l.p2.x);
-        unsigned int y1 = roundToInt(l.p2.y);
-        image.draw_line(x0, y0, x1, y1, l.color);
-    }
-    return image;
-}
 
-Point2D doProjection(const Vector3D &point, const double &d=1.0){
-    Point2D p;
-    p.x = (d * point.x) / -(point.z);
-    p.y = (d * point.y) / -(point.z);
-    return p;
-}
-
-Lines2D doProjection(Figures3D &figures){
-    Lines2D lines;
-    for (Figure &fig : figures){
-        for (Face &face : fig.faces){
-            Point2D p1;
-            Point2D p2;
-            p1 = doProjection(fig.points[face.point_indexes[0]]);
-            p2 = doProjection(fig.points[face.point_indexes[1]]);
-            Line2D line;
-            line.p1 = p1;
-            line.p2 = p2;
-            line.color = fig.color;
-            lines.push_back(line);
-        }
-    }
-    return lines;
-}
 
 // Image generating functions
 
@@ -295,12 +168,25 @@ img::EasyImage IntroLines(const ini::Configuration &configuration){
 }
 
 img::EasyImage L2DSystem(const ini::Configuration &configuration){
-    std::string type = configuration["General"]["type"].as_string_or_die();
-    const double size = configuration["General"]["size"].as_double_or_die();
-    const std::vector<double> bcVector = configuration["General"]["backgroundcolor"].as_double_tuple_or_die();
+    ini::Section general = configuration["General"];
+    std::string type = general["type"].as_string_or_die();
+    const double size = general["size"].as_double_or_die();
+    std::vector<double> aspectratio = {0, 1};
+    general["aspectratio"].as_double_tuple_if_exists(aspectratio);
+    double ar = aspectratio[0] / aspectratio[1];
+
+    const std::vector<double> bcVector = general["backgroundcolor"].as_double_tuple_or_die();
     img::Color bc(bcVector[0]*255, bcVector[1]*255, bcVector[2]*255);
+    std::vector<double> bcVectorGr = {0, 0, 0};
+    bool isGrB = general["gradient"].as_double_tuple_if_exists(bcVectorGr);
+    img::Color bcGr(bcVectorGr[0]*255, bcVectorGr[1]*255, bcVectorGr[2]*255);
+
     const std::vector<double> lcVector = configuration["2DLSystem"]["color"].as_double_tuple_or_die();
     img::Color lc(lcVector[0]*255, lcVector[1]*255, lcVector[2]*255);
+    std::vector<double> lcVectorGr = {0, 0, 0};
+    bool isGrL = configuration["2DLSystem"]["gradient"].as_double_tuple_if_exists(lcVectorGr);
+    img::Color lcGr(lcVectorGr[0]*255, lcVectorGr[1]*255, lcVectorGr[2]*255);
+
     std::string inf = configuration["2DLSystem"]["inputfile"];
     // Create 2D L-system
     LParser::LSystem2D l_system;
@@ -321,70 +207,161 @@ img::EasyImage L2DSystem(const ini::Configuration &configuration){
     double x = 0;
     double y = 0;
     recursivePrintString(l_system, init, cur_it, max_it,
-                         alph_angle, delt_angle, lines, brStack, lc, x, y);
-
-    img::EasyImage image = draw2DLines(lines, size, bc);
+                         alph_angle, delt_angle, lines, brStack,
+                         lc, lcGr, isGrL, x, y);
+    img::EasyImage image = draw2DLines(lines, size, bc, bcGr, isGrB, ar);
     return image;
 };
 
 img::EasyImage Wireframe(const ini::Configuration &configuration){
     ini::Section general = configuration["General"];
+
+    // ##### ZBuffered Wireframe #####
+    bool isZBuf = false;
+    if (general["type"].as_string_or_die() == "ZBufferedWireframe") isZBuf = true;
+
+    // ##### ZBuffering with triangles #####
+    bool isTriang = false;
+    if (general["type"].as_string_or_die() == "ZBuffering") isTriang = true;
+
+    // ##### Image size #####
     double size = general["size"].as_double_or_die();
-    std::vector<double> bcDub = general["backgroundcolor"].as_double_tuple_or_die();
-    img::Color bc(bcDub[0]*255, bcDub[1]*255, bcDub[2]*255);
+
+    // ##### Aspect ratio #####
+    std::vector<double> aspectratio = {0, 1};
+    general["aspectratio"].as_double_tuple_if_exists(aspectratio);
+    double ar = aspectratio[0] / aspectratio[1];
+
+    // ##### Background colour #####
+    const std::vector<double> bcVector = general["backgroundcolor"].as_double_tuple_or_die();
+    img::Color bc(bcVector[0]*255, bcVector[1]*255, bcVector[2]*255);
+
+    // ##### Background gradient #####
+    std::vector<double> bcVectorGr = {0, 0, 0};
+    bool isGrB = general["gradient"].as_double_tuple_if_exists(bcVectorGr);
+    img::Color bcGr(bcVectorGr[0]*255, bcVectorGr[1]*255, bcVectorGr[2]*255);
+
     int nrFig = general["nrFigures"].as_int_or_die();
+
     std::vector<double> e = general["eye"].as_double_tuple_or_die();
     Vector3D eye = Vector3D::point(e[0], e[1], e[2]);
-    // Vector3D trans = Vector3D::vector(0, 0, -e[2]);
+
     Figures3D figures;
     for (int i=0; i<nrFig; i++){
         ini::Section figure = configuration["Figure" + std::to_string(i)];
         std::string type = figure["type"].as_string_or_die();
+
+        // ##### Rotation matrices #####
         double rotXang = (figure["rotateX"].as_double_or_die() / 360.0) * 2*PI;
         double rotYang = (figure["rotateY"].as_double_or_die() / 360.0) * 2*PI;
         double rotZang = (figure["rotateZ"].as_double_or_die() / 360.0) * 2*PI;
         double scale = figure["scale"].as_double_or_die();
+
+        // ##### Figure center #####
         std::vector<double> cen = figure["center"].as_double_tuple_or_die();
         Vector3D center = Vector3D::vector(cen[0], cen[1], cen[2]);
+
+        // ##### Figure colour #####
         std::vector<double> col = figure["color"].as_double_tuple_or_die();
         img::Color color(col[0]*255, col[1]*255, col[2]*255);
-        int nrPoints = figure["nrPoints"].as_int_or_die();
-        int nrLines = figure["nrLines"].as_int_or_die();
 
-        std::vector<Vector3D> points;
-        std::vector<Face> faces;
+        // ##### Figure gradient #####
+        std::vector<double> colGr = {0, 0, 0};
+        bool isGr = figure["gradient"].as_double_tuple_if_exists(colGr);
+        img::Color colorGr(colGr[0]*255, colGr[1]*255, colGr[2]*255);
 
-        for (int j=0; j<nrPoints; j++){
-            std::vector<double> p = figure["point" + std::to_string(j)].as_double_tuple_or_die();
-            Vector3D point = Vector3D::point(p[0], p[1], p[2]);
-            points.push_back(point);
+        Figure fig;
+        if (type=="LineDrawing"){
+            fig = createLineDrawing(configuration, i);
+        } else if (type == "Cube"){
+            fig = createCube();
+        } else if (type=="Tetrahedron"){
+            fig = createTetrahedron();
+        } else if (type=="Octahedron"){
+            fig = createOctahedron();
+        } else if (type=="Icosahedron"){
+            fig = createIcosahedron();
+        } else if (type=="Dodecahedron"){
+            fig = createDodecahedron();
+        } else if (type=="Icosahedron"){
+            fig = createIcosahedron();
+        } else if (type=="Dodecahedron"){
+            fig = createDodecahedron();
+        } else if (type=="Cylinder"){
+            double h = figure["height"].as_double_or_die();
+            int n = figure["n"].as_int_or_die();
+            fig = createCylinder(h, n);
+        } else if (type=="Cone"){
+            double h = figure["height"].as_double_or_die();
+            int n = figure["n"].as_int_or_die();
+            fig = createCone(h, n);
+        } else if(type=="Sphere"){
+            int n = figure["n"].as_int_or_die();
+            double radius;
+            fig = createSphere(radius, n);
+        } else if(type=="Torus"){
+            double r = figure["r"].as_double_or_die();
+            double R = figure["R"].as_double_or_die();
+            int m = figure["m"].as_int_or_die();
+            int n = figure["n"].as_int_or_die();
+            fig = createTorus(r, R, m, n);
+        } else if(type=="SpecialSphere"){
+            double r = figure["r"].as_double_or_die();
+            double R = figure["R"].as_double_or_die();
+            int m = figure["m"].as_int_or_die();
+            int n = figure["n"].as_int_or_die();
+            fig = createSpecialSphere(r, R, m, n);
+        } else if(type=="3DLSystem") {
+            std::string inf = figure["inputfile"].as_string_or_die();
+            // Create 2D L-system
+            LParser::LSystem3D l_system;
+            std::ifstream input_stream(inf);
+            if (type=="3DLSystemStoch") l_system.setStoch(true);
+            input_stream >> l_system;
+            input_stream.close();
+            // Get values from 3D L-system
+            std::set<char> alph = l_system.get_alphabet();
+            std::string init = l_system.get_initiator();
+            unsigned int max_it = l_system.get_nr_iterations();
+            double delt_angle = (l_system.get_angle() / 360.0) * 2*PI;
+
+            std::stack<double> doubleStack;
+            std::stack<Vector3D> vectorStack;
+            unsigned int cur_it = 0;
+            double x = 0;
+            double y = 0;
+            double z = 0;
+            Vector3D H = Vector3D::vector(1, 0, 0);
+            Vector3D L = Vector3D::vector(0, 1, 0);
+            Vector3D U = Vector3D::vector(0, 0, 1);
+
+            recursivePrintString(l_system, init, cur_it, max_it,
+                                 delt_angle, fig,
+                                 doubleStack, vectorStack,
+                                 x, y, z, H, L, U);
         }
-
-        for (int j=0; j<nrLines; j++){
-            std::vector<int> p = figure["line" + std::to_string(j)].as_int_tuple_or_die();
-            Face f;
-            for (int k : p){
-                f.point_indexes.push_back(k);
-            }
-            faces.push_back(f);
-        }
+        fig.color = color;
+        fig.colorGr = colorGr;
+        fig.isGradient = isGr;
         Matrix sclM = scaleFigure(scale);
         Matrix rotX = rotateX(rotXang);
         Matrix rotY = rotateY(rotYang);
         Matrix rotZ = rotateZ(rotZang);
-        // Matrix trsM = translate(center);
+        Matrix trsM = translate(center);
         Matrix eyeT = eyePointTrans(eye);
-        Matrix V = sclM * rotX * rotY * rotZ * /* trsM * */ eyeT;
-        Figure fig;
-        fig.points = points;
-        fig.faces = faces;
-        fig.color = color;
+        Matrix V = sclM * rotX * rotY * rotZ * trsM  * eyeT;
         applyTransformation(fig, V);
         figures.push_back(fig);
     }
     Lines2D lines;
     lines = doProjection(figures);
-    return draw2DLines(lines, size, bc);
+    if (isZBuf) {
+        return drawZBufLines(lines, size, bc, bcGr, isGrB, ar);
+    } else if (isTriang) {
+        return drawTriangLines(figures, size, bc, bcGr, isGrB, ar);
+    } else {
+        return draw2DLines(lines, size, bc, bcGr, isGrB, ar);
+    }
 }
 
 img::EasyImage generate_image(const ini::Configuration &configuration){
@@ -395,10 +372,11 @@ img::EasyImage generate_image(const ini::Configuration &configuration){
         return IntroBlocks(configuration);
     } else if(type=="IntroLines"){
         return IntroLines(configuration);
-    } else if(type=="2DLSystem"||type=="2DLSystemStoch"){
+    } else if(type=="2DLSystem" or type=="2DLSystemStoch"){
         return L2DSystem(configuration);
-    } else if (type=="Wireframe")
+    } else if (type=="Wireframe" or type=="ZBufferedWireframe" or type == "ZBuffering"){
         return Wireframe(configuration);
+    }
     img::EasyImage image;
     return image;
 }

@@ -1,0 +1,37 @@
+[
+{
+  "directory": "/home/sergio/Projects/C++/CompGraphX",
+  "command": "/usr/bin/c++     -g   -std=gnu++11 -o CMakeFiles/engine.dir/src/easy_image.cc.o -c /home/sergio/Projects/C++/CompGraphX/src/easy_image.cc",
+  "file": "/home/sergio/Projects/C++/CompGraphX/src/easy_image.cc"
+},
+{
+  "directory": "/home/sergio/Projects/C++/CompGraphX",
+  "command": "/usr/bin/c++     -g   -std=gnu++11 -o CMakeFiles/engine.dir/src/engine.cc.o -c /home/sergio/Projects/C++/CompGraphX/src/engine.cc",
+  "file": "/home/sergio/Projects/C++/CompGraphX/src/engine.cc"
+},
+{
+  "directory": "/home/sergio/Projects/C++/CompGraphX",
+  "command": "/usr/bin/c++     -g   -std=gnu++11 -o CMakeFiles/engine.dir/src/ini_configuration.cc.o -c /home/sergio/Projects/C++/CompGraphX/src/ini_configuration.cc",
+  "file": "/home/sergio/Projects/C++/CompGraphX/src/ini_configuration.cc"
+},
+{
+  "directory": "/home/sergio/Projects/C++/CompGraphX",
+  "command": "/usr/bin/c++     -g   -std=gnu++11 -o CMakeFiles/engine.dir/src/l_parser.cc.o -c /home/sergio/Projects/C++/CompGraphX/src/l_parser.cc",
+  "file": "/home/sergio/Projects/C++/CompGraphX/src/l_parser.cc"
+},
+{
+  "directory": "/home/sergio/Projects/C++/CompGraphX",
+  "command": "/usr/bin/c++     -g   -std=gnu++11 -o CMakeFiles/engine.dir/src/Line2D.cc.o -c /home/sergio/Projects/C++/CompGraphX/src/Line2D.cc",
+  "file": "/home/sergio/Projects/C++/CompGraphX/src/Line2D.cc"
+},
+{
+  "directory": "/home/sergio/Projects/C++/CompGraphX",
+  "command": "/usr/bin/c++     -g   -std=gnu++11 -o CMakeFiles/engine.dir/src/3DFigures.cc.o -c /home/sergio/Projects/C++/CompGraphX/src/3DFigures.cc",
+  "file": "/home/sergio/Projects/C++/CompGraphX/src/3DFigures.cc"
+},
+{
+  "directory": "/home/sergio/Projects/C++/CompGraphX",
+  "command": "/usr/bin/c++     -g   -std=gnu++11 -o CMakeFiles/engine.dir/src/vector.cc.o -c /home/sergio/Projects/C++/CompGraphX/src/vector.cc",
+  "file": "/home/sergio/Projects/C++/CompGraphX/src/vector.cc"
+}
+]

@@ -18,18 +18,19 @@ do
     fi
 done
 
-cp input/$FOLDER/*.ini input/$FOLDER/*.L2D ./ &>/dev/null
-for FILE in $(find *.ini)
+cp -f input/$FOLDER*.L2D input/$FOLDER*.L3D ./
+
+for FILE in $(find input/$FOLDER*.ini)
 do
     echo "Processing $FILE"
     ./engine $FILE
 done
 
-eog *.bmp
+eog input/$FOLDER*.bmp input/$FOLDER*.png
 
-rm *.ini *.L2D &>/dev/null
+rm -f *.L3D *.L2D
 
 if [ "$DEL" == "yes" ];
 then
-    rm *.bmp
+    rm input/$FOLDER*.bmp
 fi

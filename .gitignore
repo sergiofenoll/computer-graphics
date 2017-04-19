@@ -1,0 +1,14 @@
+# Created by .ignore support plugin (hsz.mobi)
+.idea/
+obj/
+CMakeLists.txt
+README.md
+backup/
+cmake-build-debug/
+cmake-build-release/
+engine
+ext_in/
+input
+.generate_all.sh.bak
+*.bmp
+*.ini

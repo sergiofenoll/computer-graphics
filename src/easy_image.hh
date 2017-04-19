@@ -20,6 +20,26 @@
 #include <stdint.h>
 #include <vector>
 #include <iostream>
+#include <limits>
+#include <algorithm>
+#include "vector.hh"
+
+const double inf = std::numeric_limits<double>::infinity();
+
+class ZBuffer {
+private:
+	std::vector<std::vector<double>> z_buf;
+public:
+	ZBuffer(const int& width, const int& height) {
+		std::vector<double> h(height, inf);
+		std::vector<std::vector<double>> w(width, h);
+		z_buf = w;
+	}
+	double& operator()(unsigned int x, unsigned int y) {
+		return z_buf[x][y];
+	}
+};
+
 /**
  * \brief The namespace of the EasyImage class
  */
@@ -69,6 +89,11 @@ namespace img
 			 * Destructor
 			 */
 			~Color();
+
+            /**
+             * Equality operator overload
+             */
+            bool operator==(Color &rhs) const;
 	};
 
 	/**
@@ -131,14 +156,23 @@ namespace img
 			 */
 			EasyImage();
 
-			/**
-			 * \brief Constructor: creates a new EasyImage of the specified width and height
-			 *
-			 * \param width		the width of the image
-			 * \param height	the height of the image
-			 * \param color		(optional) the background color of the image
-			 */
-			EasyImage(unsigned int width, unsigned int height, Color color = Color());
+			// /**
+			//  * \brief Constructor: creates a new EasyImage of the specified width and height
+			//  *
+			//  * \param width		the width of the image
+			//  * \param height	the height of the image
+			//  * \param color		(optional) the background color of the image
+			//  */
+			// EasyImage(unsigned int width, unsigned int height, Color color = Color());
+
+            /**
+             * \brief Constructor: creates a new EasyImage with a gradient color
+             * \param width     the width of the image
+             * \param height    the height of the image
+             * \param colorA    (optional) the first color to determine the gradient
+             * \param colorB    (optional) the second color to determine the gradient
+             */
+            EasyImage(unsigned int width, unsigned int height, Color colorA = Color(0, 0, 0), Color colorB = Color(0, 0, 0), bool isGradient=false);
 
 			/**
 			 * \brief Copy Constructor
@@ -203,22 +237,34 @@ namespace img
 			 */
 			void clear(Color color = Color());
 
-			/**
-			 * \brief Draws a line from pixel (x0,y0) to pixel (x1,y1) in the specified color
-			 *
-			 * \param x0	the x coordinate of the first pixel
-			 * \param y0	the y coordinate of the first pixel
-			 * \param x1	the x coordinate of the second pixel
-			 * \param y1	the y coordinate of the second pixel
-			 * \param color	the color of the line
-			 *
-			 * These assertions apply:
-			 *	assert(x0 < getWidth())
-			 * 	assert(y0 < getHeight())
-			 * 	assert(x1 < getWidth())
-			 * 	assert(y1 < getHeight())
-			 */
-			void draw_line(unsigned int x0, unsigned int y0, unsigned int x1, unsigned int y1, Color color);
+			// /**
+			//  * \brief Draws a line from pixel (x0,y0) to pixel (x1,y1) in the specified color
+			//  *
+			//  * \param x0	the x coordinate of the first pixel
+			//  * \param y0	the y coordinate of the first pixel
+			//  * \param x1	the x coordinate of the second pixel
+			//  * \param y1	the y coordinate of the second pixel
+			//  * \param color	the color of the line
+			//  *
+			//  * These assertions apply:
+			//  *	assert(x0 < getWidth())
+			//  * 	assert(y0 < getHeight())
+			//  * 	assert(x1 < getWidth())
+			//  * 	assert(y1 < getHeight())
+			//  */
+			// void draw_line(unsigned int x0, unsigned int y0, unsigned int x1, unsigned int y1, Color color);
+
+            void draw_line(unsigned int x0, unsigned int y0, unsigned int x1, unsigned int y1, Color color = Color(255, 255, 255), Color colorGr = Color(), bool isGradient = false);
+
+			void draw_zbuf_line(ZBuffer& z_buffer,
+								const unsigned int x0, const unsigned int y0, const double z0,
+								const unsigned int x1, const unsigned int y1, const double z1,
+								Color color = Color(255, 255, 255), Color colorGr = Color(), bool isGradient = false);
+
+            void draw_zbuf_triang(ZBuffer& z_buffer,
+                                  Vector3D& A, Vector3D& B, Vector3D& C,
+                                  double d, double dx, double dy,
+                                  Color color = Color(255, 255, 255), Color colorGr = Color(), bool isGradient = false);
 
 		private:
 			friend std::istream& operator>>(std::istream& in, EasyImage & image);

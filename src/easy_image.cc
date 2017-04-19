@@ -121,6 +121,13 @@ img::Color::~Color()
 {
 }
 
+bool img::Color::operator==(img::Color &rhs) const{
+    return
+        this->red == rhs.red &&
+        this->green == rhs.green &&
+        this->blue == rhs.blue;
+}
+
 img::UnsupportedFileTypeException::UnsupportedFileTypeException(std::string const& msg) :
 	message(msg)
 {
@@ -148,9 +155,28 @@ img::EasyImage::EasyImage() :
 {
 }
 
-img::EasyImage::EasyImage(unsigned int _width, unsigned int _height, Color color) :
-	width(_width), height(_height), bitmap(width * height, color)
-{
+// img::EasyImage::EasyImage(unsigned int _width, unsigned int _height, Color color) :
+// 	width(_width), height(_height), bitmap(width * height, color)
+// {
+// }
+
+img::EasyImage::EasyImage(unsigned int width, unsigned int height, Color color, Color colorGr, bool isGradient) :
+	bitmap(width * height, color) {
+    EasyImage::width = width;
+    EasyImage::height = height;
+	Color stdCol = Color();
+	if (!isGradient); // No gradient
+	else {
+		// Make gradient
+	    for (unsigned int x=0; x<width; x++){
+	        for (unsigned int y=0; y<height; y++){
+	            double p = x / (width - 1.0);
+	            bitmap[x * height + y].red = (1 - p) * color.red + p * colorGr.red + 0.5;
+	            bitmap[x * height + y].green = (1 - p) * color.green + p * colorGr.green + 0.5;
+	            bitmap[x * height + y].blue = (1 - p) * color.blue + p * colorGr.blue + 0.5;
+	        }
+	    }
+	}
 }
 
 img::EasyImage::EasyImage(EasyImage const& img) :
@@ -205,7 +231,10 @@ img::Color const& img::EasyImage::operator()(unsigned int x, unsigned int y) con
 	return bitmap.at(x * height + y);
 }
 
-void img::EasyImage::draw_line(unsigned int x0, unsigned int y0, unsigned int x1, unsigned int y1, Color color)
+void img::EasyImage::draw_line(
+                    unsigned int x0, unsigned int y0,
+                    unsigned int x1, unsigned int y1,
+                    Color color, Color colorGr, bool isGradient)
 {
 	assert(x0 < this->width && y0 < this->height);
 	assert(x1 < this->width && y1 < this->height);
@@ -214,7 +243,13 @@ void img::EasyImage::draw_line(unsigned int x0, unsigned int y0, unsigned int x1
 		//special case for x0 == x1
 		for (unsigned int i = std::min(y0, y1); i <= std::max(y0, y1); i++)
 		{
-			(*this)(x0, i) = color;
+			if (!isGradient) (*this)(x0, i) = color;
+			else {
+				double p = x0 / (this->get_width() - 1.0);
+				(*this)(x0, i).red = (1 - p) * color.red + p * colorGr.red + 0.5;
+				(*this)(x0, i).green = (1 - p) * color.green + p * colorGr.green + 0.5;
+				(*this)(x0, i).blue = (1 - p) * color.blue + p * colorGr.blue + 0.5;
+			}
 		}
 	}
 	else if (y0 == y1)
@@ -222,7 +257,13 @@ void img::EasyImage::draw_line(unsigned int x0, unsigned int y0, unsigned int x1
 		//special case for y0 == y1
 		for (unsigned int i = std::min(x0, x1); i <= std::max(x0, x1); i++)
 		{
-			(*this)(i, y0) = color;
+			if (!isGradient) (*this)(i, y0) = color;
+			else {
+				double p = i / (this->get_width() - 1.0);
+				(*this)(i, y0).red = (1 - p) * color.red + p * colorGr.red + 0.5;
+				(*this)(i, y0).green = (1 - p) * color.green + p * colorGr.green + 0.5;
+				(*this)(i, y0).blue = (1 - p) * color.blue + p * colorGr.blue + 0.5;
+			}
 		}
 	}
 	else
@@ -238,25 +279,259 @@ void img::EasyImage::draw_line(unsigned int x0, unsigned int y0, unsigned int x1
 		{
 			for (unsigned int i = 0; i <= (x1 - x0); i++)
 			{
-				(*this)(x0 + i, (unsigned int) round(y0 + m * i)) = color;
+				if (!isGradient) (*this)(x0 + i, (unsigned int) round(y0 + m * i)) = color;
+				else {
+					double p = (x0 + i) / (this->get_width() - 1.0);
+					(*this)(x0 + i, (unsigned int) round(y0 + m * i)).red = (1 - p) * color.red + p * colorGr.red + 0.5;
+					(*this)(x0 + i, (unsigned int) round(y0 + m * i)).green = (1 - p) * color.green + p * colorGr.green + 0.5;
+					(*this)(x0 + i, (unsigned int) round(y0 + m * i)).blue = (1 - p) * color.blue + p * colorGr.blue + 0.5;
+				}
 			}
 		}
 		else if (m > 1.0)
 		{
 			for (unsigned int i = 0; i <= (y1 - y0); i++)
 			{
-				(*this)((unsigned int) round(x0 + (i / m)), y0 + i) = color;
+				if (!isGradient) (*this)((unsigned int) round(x0 + (i / m)), y0 + i) = color;
+				else {
+					double p = ((unsigned int) round(x0 + (i / m))) / (this->get_width() - 1.0);
+					(*this)((unsigned int) round(x0 + (i / m)), y0 + i).red = (1 - p) * color.red + p * colorGr.red + 0.5;
+					(*this)((unsigned int) round(x0 + (i / m)), y0 + i).green = (1 - p) * color.green + p * colorGr.green + 0.5;
+					(*this)((unsigned int) round(x0 + (i / m)), y0 + i).blue = (1 - p) * color.blue + p * colorGr.blue + 0.5;
+				}
 			}
 		}
 		else if (m < -1.0)
 		{
 			for (unsigned int i = 0; i <= (y0 - y1); i++)
 			{
-				(*this)((unsigned int) round(x0 - (i / m)), y0 - i) = color;
+				if (!isGradient) (*this)((unsigned int) round(x0 - (i / m)), y0 - i) = color;
+				else {
+					double p = ((unsigned int) round(x0 - (i / m))) / (this->get_width() - 1.0);
+					(*this)((unsigned int) round(x0 - (i / m)), y0 - i).red = (1 - p) * color.red + p * colorGr.red + 0.5;
+					(*this)((unsigned int) round(x0 - (i / m)), y0 - i).green = (1 - p) * color.green + p * colorGr.green + 0.5;
+					(*this)((unsigned int) round(x0 - (i / m)), y0 - i).blue = (1 - p) * color.blue + p * colorGr.blue + 0.5;
+				}
 			}
 		}
 	}
 }
+
+void img::EasyImage::draw_zbuf_line(ZBuffer& z_buffer,
+                    unsigned int x0, unsigned int y0, double z0,
+                    unsigned int x1, unsigned int y1, double z1,
+                    Color color, Color colorGr, bool isGradient) {
+    assert(x0 < this->width && y0 < this->height);
+    assert(x1 < this->width && y1 < this->height);
+    if (x0 == x1)
+    {
+        int a = std::max(y0, y1) - std::min(y0, y1);
+        int k = a;
+        //special case for x0 == x1
+        for (unsigned int i = std::min(y0, y1); i <= std::max(y0, y1); i++)
+        {
+            double z_inv = (((double) k / (double) a) / z0) + ((1 - ((double) k / (double) a)) / z1);
+            if (z_inv < z_buffer(x0, i)) {
+                z_buffer(x0, i) = z_inv;
+                if (!isGradient) (*this)(x0, i) = color;
+                else {
+                    double p = x0 / (this->get_width() - 1.0);
+                    (*this)(x0, i).red =
+                            (1 - p) * color.red + p * colorGr.red + 0.5;
+                    (*this)(x0, i).green =
+                            (1 - p) * color.green + p * colorGr.green + 0.5;
+                    (*this)(x0, i).blue =
+                            (1 - p) * color.blue + p * colorGr.blue + 0.5;
+                }
+            }
+            k--;
+        }
+    }
+    else if (y0 == y1)
+    {
+        int a = std::max(x0, x1) - std::min(x0, x1);
+        int k = a;
+        //special case for y0 == y1
+        for (unsigned int i = std::min(x0, x1); i <= std::max(x0, x1); i++)
+        {
+            double z_inv = (((double) k / (double) a) / z0) + ((1 - ((double) k / (double) a)) / z1);
+            if (z_inv < z_buffer(i, y0)) {
+                z_buffer(i, y0) = z_inv;
+                if (!isGradient) (*this)(i, y0) = color;
+                else {
+                    double p = i / (this->get_width() - 1.0);
+                    (*this)(i, y0).red =
+                            (1 - p) * color.red + p * colorGr.red + 0.5;
+                    (*this)(i, y0).green =
+                            (1 - p) * color.green + p * colorGr.green + 0.5;
+                    (*this)(i, y0).blue =
+                            (1 - p) * color.blue + p * colorGr.blue + 0.5;
+                }
+            }
+            k--;
+        }
+    }
+    else
+    {
+        if (x0 > x1)
+        {
+            //flip points if x1>x0: we want x0 to have the lowest value
+            std::swap(x0, x1);
+            std::swap(y0, y1);
+            std::swap(z0, z1);
+        }
+        double m = ((double) y1 - (double) y0) / ((double) x1 - (double) x0);
+        if (-1.0 <= m && m <= 1.0)
+        {
+            int a = x1 - x0;
+            int k = a;
+            for (unsigned int i = 0; i <= (x1 - x0); i++)
+            {
+                double z_inv = (((double) k / (double) a) / z0) + ((1 - ((double) k / (double) a)) / z1);
+                if (z_inv < z_buffer(x0 + i, (unsigned int) round(y0 + m * i))) {
+                    z_buffer(x0 + i, (unsigned int) round(y0 + m * i)) = z_inv;
+                    if (!isGradient) (*this)(x0 + i, (unsigned int) round(y0 + m * i)) = color;
+                    else {
+                        double p = (x0 + i) / (this->get_width() - 1.0);
+                        (*this)(x0 + i, (unsigned int) round(y0 + m * i)).red =
+                                (1 - p) * color.red + p * colorGr.red + 0.5;
+                        (*this)(x0 + i, (unsigned int) round(y0 + m * i)).green =
+                                (1 - p) * color.green + p * colorGr.green + 0.5;
+                        (*this)(x0 + i, (unsigned int) round(y0 + m * i)).blue =
+                                (1 - p) * color.blue + p * colorGr.blue + 0.5;
+                    }
+                }
+                k--;
+            }
+        }
+        else if (m > 1.0)
+        {
+            int a = y1 - y0;
+            int k = a;
+            for (unsigned int i = 0; i <= (y1 - y0); i++)
+            {
+                double z_inv = (((double) k / (double) a) / z0) + ((1 - ((double) k / (double) a)) / z1);
+                if (z_inv < z_buffer((unsigned int) round(x0 + (i / m)), y0 + i)) {
+                    z_buffer((unsigned int) round(x0 + (i / m)), y0 + i) = z_inv;
+                    if (!isGradient) (*this)((unsigned int) round(x0 + (i / m)), y0 + i) = color;
+                    else {
+                        double p = ((unsigned int) round(x0 + (i / m))) / (this->get_width() - 1.0);
+                        (*this)((unsigned int) round(x0 + (i / m)), y0 + i).red =
+                                (1 - p) * color.red + p * colorGr.red + 0.5;
+                        (*this)((unsigned int) round(x0 + (i / m)), y0 + i).green =
+                                (1 - p) * color.green + p * colorGr.green + 0.5;
+                        (*this)((unsigned int) round(x0 + (i / m)), y0 + i).blue =
+                                (1 - p) * color.blue + p * colorGr.blue + 0.5;
+                    }
+                }
+                k--;
+            }
+        }
+        else if (m < -1.0)
+        {
+            int a = y0 - y1;
+            int k = a;
+            for (unsigned int i = 0; i <= (y0 - y1); i++)
+            {
+                double z_inv = (((double) k / (double) a) / z0) + ((1 - ((double) k / (double) a)) / z1);
+                if (z_inv < z_buffer((unsigned int) round(x0 - (i / m)), y0 - i)) {
+                    z_buffer((unsigned int) round(x0 - (i / m)), y0 - i) = z_inv;
+                    if (!isGradient) (*this)((unsigned int) round(x0 - (i / m)), y0 - i) = color;
+                    else {
+                        double p = ((unsigned int) round(x0 - (i / m))) / (this->get_width() - 1.0);
+                        (*this)((unsigned int) round(x0 - (i / m)), y0 - i).red =
+                                (1 - p) * color.red + p * colorGr.red + 0.5;
+                        (*this)((unsigned int) round(x0 - (i / m)), y0 - i).green =
+                                (1 - p) * color.green + p * colorGr.green + 0.5;
+                        (*this)((unsigned int) round(x0 - (i / m)), y0 - i).blue =
+                                (1 - p) * color.blue + p * colorGr.blue + 0.5;
+                    }
+                }
+                k--;
+            }
+        }
+    }
+}
+
+void img::EasyImage::draw_zbuf_triang(ZBuffer& z_buffer,
+                    Vector3D& A, Vector3D& B, Vector3D& C,
+                    double d, double dx, double dy,
+                    Color color, Color colorGr, bool isGradient) {
+    double xA = -((d * A.x) / (A.z)) + dx;
+    double yA = -((d * A.y) / (A.z)) + dy;
+    double xB = -((d * B.x) / (B.z)) + dx;
+    double yB = -((d * B.y) / (B.z)) + dy;
+    double xC = -((d * C.x) / (C.z)) + dx;
+    double yC = -((d * C.y) / (C.z)) + dy;
+
+    double xG = (xA + xB + xC) / 3.0;
+    double yG = (yA + yB + yC) / 3.0;
+    double zG_inverted = (1.0 / (3.0 * A.z)) + (1.0 / (3.0 * B.z)) + (1.0 / (3.0 * C.z));
+
+    int yMin = std::round(std::min(std::min(yA, yB), yC) + 0.5);
+    int yMax = std::round(std::max(std::max(yA, yB), yC) - 0.5);
+
+    Vector3D u = B - A;
+    Vector3D v = C - A;
+    Vector3D w; w = u.cross_equals(v);
+    double k = (w.x * A.x) + (w.y + A.y) + (w.z + A.z);
+    double dzdx = -(w.x / (d * k));
+    double dzdy = -(w.y / (d * k));
+
+    for (unsigned int yI=yMin; yI<=yMax; yI++) {
+        double xL_AB = inf;
+        double xL_AC = inf;
+        double xL_BC = inf;
+        double xR_AB = -inf;
+        double xR_AC = -inf;
+        double xR_BC = -inf;
+
+        // PQ == AB
+        if ((((yI - yA) * (yI - yB)) <= 0) and yA != yB) {
+            double xI = xB + ((xA - xB) * ((yI - yB) / (yA - yB)));
+            xL_AB = xI;
+            xR_AB = xI;
+        }
+
+        // PQ == AC
+        if ((((yI - yA) * (yI - yC)) <= 0) and yA != yC) {
+            double xI = xC + ((xA - xC) * ((yI - yC) / (yA - yC)));
+            xL_AC = xI;
+            xR_AC = xI;
+        }
+
+        // PQ == BC
+        if ((((yI - yB) * (yI - yC)) <= 0) and yB != yC) {
+            double xI = xC + ((xB - xC) * ((yI - yC) / (yB - yC)));
+            xL_BC = xI;
+            xR_BC = xI;
+        }
+
+        int xL = std::round(std::min(std::min(xL_AB, xL_AC), xL_BC) + 0.5);
+        int xR = std::round(std::max(std::max(xR_AB, xR_AC), xR_BC) - 0.5);
+
+        // if (xL < 0) continue;
+
+        for (unsigned int xI=xL; xI<=xR; xI++) {
+            double z_inv = (1.0001 * zG_inverted) + (((double) xI - xG) * dzdx) + (((double) yI - yG) * dzdy);
+            if (z_inv < z_buffer(xI, yI)) {
+                z_buffer(xI, yI) = z_inv;
+                if (!isGradient) (*this)(xI, yI) = color;
+                else {
+                    double p = xI / (this->get_width() - 1.0);
+                    (*this)(xI, yI).red =
+                            (1 - p) * color.red + p * colorGr.red + 0.5;
+                    (*this)(xI, yI).green =
+                            (1 - p) * color.green + p * colorGr.green + 0.5;
+                    (*this)(xI, yI).blue =
+                            (1 - p) * color.blue + p * colorGr.blue + 0.5;
+                }
+            }
+        }
+    }
+
+}
+
 std::ostream& img::operator<<(std::ostream& out, EasyImage const& image)
 {
 

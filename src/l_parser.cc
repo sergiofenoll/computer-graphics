@@ -544,7 +544,6 @@ std::string const& LParser::LSystem::get_replacement(char c) const
     double r = ((double) std::rand()) / RAND_MAX;
     for (unsigned int i=0; i<odds.size(); i++) {
         if (odds[i] + acc > r) {
-            // We found the right odd, i.e., it's inside the sufficiently small bounds [r-0.05, r+0.05]
             return ruleset[i];
         } else acc += odds[i];
     }
