@@ -30,12 +30,13 @@ class ZBuffer {
 private:
 	std::vector<std::vector<double>> z_buf;
 public:
-	ZBuffer(const int& width, const int& height) {
+    ZBuffer(){};
+    ZBuffer(const unsigned int& width, const unsigned int& height) {
 		std::vector<double> h(height, inf);
 		std::vector<std::vector<double>> w(width, h);
 		z_buf = w;
 	}
-	double& operator()(unsigned int x, unsigned int y) {
+    double& operator()(unsigned int x, unsigned int y) {
 		return z_buf[x][y];
 	}
 };
@@ -254,17 +255,14 @@ namespace img
 			//  */
 			// void draw_line(unsigned int x0, unsigned int y0, unsigned int x1, unsigned int y1, Color color);
 
-            void draw_line(unsigned int x0, unsigned int y0, unsigned int x1, unsigned int y1, Color color = Color(255, 255, 255), Color colorGr = Color(), bool isGradient = false);
+            void draw_line(
+                    unsigned int& x0, unsigned int& y0, unsigned int& x1, unsigned int& y1, Color color = Color(255, 255, 255), Color colorGr = Color(), bool isGradient = false);
 
-			void draw_zbuf_line(ZBuffer& z_buffer,
-								const unsigned int x0, const unsigned int y0, const double z0,
-								const unsigned int x1, const unsigned int y1, const double z1,
-								Color color = Color(255, 255, 255), Color colorGr = Color(), bool isGradient = false);
+            void draw_zbuf_line(
+                    ZBuffer& z_buffer, unsigned int& x0, unsigned int& y0, double& z0, unsigned int& x1, unsigned int& y1, double& z1, Color color = Color(255, 255, 255), Color colorGr = Color(), bool isGradient = false);
 
-            void draw_zbuf_triang(ZBuffer& z_buffer,
-                                  Vector3D& A, Vector3D& B, Vector3D& C,
-                                  double d, double dx, double dy,
-                                  Color color = Color(255, 255, 255), Color colorGr = Color(), bool isGradient = false);
+            void draw_zbuf_triang(
+                    ZBuffer& z_buffer, Vector3D& A, Vector3D& B, Vector3D& C, const double& d, const double& dx, const double& dy, Color color = Color(255, 255, 255), Color colorGr = Color(), bool isGradient = false);
 
 		private:
 			friend std::istream& operator>>(std::istream& in, EasyImage & image);

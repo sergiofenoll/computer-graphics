@@ -4,7 +4,7 @@
 
 #include "Line2D.hh"
 
-Point2D doProjection(const Vector3D &point, const double &d){
+Point2D doProjection(const Vector3D& point, const double& d){
     Point2D p;
     p.x = (d * point.x) / -(point.z);
     p.y = (d * point.y) / -(point.z);
@@ -12,7 +12,7 @@ Point2D doProjection(const Vector3D &point, const double &d){
     return p;
 }
 
-Lines2D doProjection(Figures3D &figures){
+Lines2D doProjection(Figures3D& figures){
     Lines2D lines;
     for (Figure &fig : figures){
         for (Face &face : fig.faces){
@@ -35,11 +35,8 @@ Lines2D doProjection(Figures3D &figures){
     return lines;
 }
 
-img::EasyImage draw2DLines(Lines2D &lines, const int &size,
-                           const img::Color &bc,
-                           const img::Color &bcGr,
-                           bool isGrB,
-                           const double &ar) {
+img::EasyImage draw2DLines(
+        Lines2D& lines, const unsigned int& size, const img::Color& bc, const img::Color& bcGr, bool isGrB) {
     double maxX = lines[0].p1.x;
     double maxY = lines[0].p1.y;
     double minX = lines[0].p1.x;
@@ -62,20 +59,8 @@ img::EasyImage draw2DLines(Lines2D &lines, const int &size,
     double maxXY = std::max(xRange, yRange);
     double imageX = size * (xRange / maxXY);
     double imageY = size * (yRange / maxXY);
-    unsigned int width;
-    unsigned int height;
-    if (ar == 0) {
-        width = (int) imageX;
-        height = (int) imageY;
-    } else if ((int) imageX == size) {
-        width = (int) imageX;
-        height =  (int) (width / ar);
-    } else {
-        height =  (int) imageY;
-        width = (int) (height / ar);
-    }
     // Scaling factor d
-    double d = 0.95 * (width / xRange);
+    double d = 0.95 * (imageX / xRange);
     // Centers
     double DCx = d * ((minX + maxX) / 2.0);
     double DCy = d * ((minY + maxY) / 2.0);
@@ -84,7 +69,7 @@ img::EasyImage draw2DLines(Lines2D &lines, const int &size,
     // Multiply every coordinate with d,
     // add dx and dy
     // and draw lines
-    img::EasyImage image(width, height, bc, bcGr, isGrB);
+    img::EasyImage image((unsigned int) std::round(imageX), (unsigned int) std::round(imageY), bc, bcGr, isGrB);
     for(Line2D &l : lines){
         // Update the coordinates
         l.p1.x *= d;
@@ -96,91 +81,17 @@ img::EasyImage draw2DLines(Lines2D &lines, const int &size,
         l.p2.y *= d;
         l.p2.y += dy;
         // Start drawing the lines
-        unsigned int x0 = std::round(l.p1.x);
-        unsigned int y0 = std::round(l.p1.y);
-        unsigned int x1 = std::round(l.p2.x);
-        unsigned int y1 = std::round(l.p2.y);
+        unsigned int x0 = (unsigned int) std::round(l.p1.x);
+        unsigned int y0 = (unsigned int) std::round(l.p1.y);
+        unsigned int x1 = (unsigned int) std::round(l.p2.x);
+        unsigned int y1 = (unsigned int) std::round(l.p2.y);
         image.draw_line(x0, y0, x1, y1, l.color, l.colorGr, l.isGradient);
     }
     return image;
 }
 
-img::EasyImage drawZBufLines(Lines2D &lines, const int &size,
-                           const img::Color &bc,
-                           const img::Color &bcGr,
-                           bool isGrB,
-                           const double &ar) {
-    double maxX = lines[0].p1.x;
-    double maxY = lines[0].p1.y;
-    double minX = lines[0].p1.x;
-    double minY = lines[0].p1.y;
-    // Iterate over all lines looking for xmax and ymax
-    for (Line2D &l : lines) {
-        if (l.p1.x > maxX) maxX = l.p1.x;
-        if (l.p1.x < minX) minX = l.p1.x;
-        if (l.p2.x > maxX) maxX = l.p2.x;
-        if (l.p2.x < minX) minX = l.p2.x;
-        if (l.p1.y > maxY) maxY = l.p1.y;
-        if (l.p1.y < minY) minY = l.p1.y;
-        if (l.p2.y > maxY) maxY = l.p2.y;
-        if (l.p2.y < minY) minY = l.p2.y;
-    }
-    // Ranges
-    double xRange = maxX - minX;
-    double yRange = maxY - minY;
-    // Size of image (width, height)
-    double maxXY = std::max(xRange, yRange);
-    double imageX = size * (xRange / maxXY);
-    double imageY = size * (yRange / maxXY);
-    unsigned int width;
-    unsigned int height;
-    if (ar == 0) {
-        width = (int) imageX;
-        height = (int) imageY;
-    } else if ((int) imageX == size) {
-        width = (int) imageX;
-        height =  (int) (width / ar);
-    } else {
-        height =  (int) imageY;
-        width = (int) (height / ar);
-    }
-    // Scaling factor d
-    double d = 0.95 * (width / xRange);
-    // Centers
-    double DCx = d * ((minX + maxX) / 2.0);
-    double DCy = d * ((minY + maxY) / 2.0);
-    double dx = (imageX / 2.0) - DCx;
-    double dy = (imageY / 2.0) - DCy;
-    // Multiply every coordinate with d,
-    // add dx and dy
-    // and draw lines
-    img::EasyImage image(width, height, bc, bcGr, isGrB);
-    ZBuffer z_buffer(width, height);
-    for(Line2D &l : lines){
-        // Update the coordinates
-        l.p1.x *= d;
-        l.p1.x += dx;
-        l.p2.x *= d;
-        l.p2.x += dx;
-        l.p1.y *= d;
-        l.p1.y += dy;
-        l.p2.y *= d;
-        l.p2.y += dy;
-        // Start drawing the lines
-        unsigned int x0 = std::round(l.p1.x);
-        unsigned int y0 = std::round(l.p1.y);
-        unsigned int x1 = std::round(l.p2.x);
-        unsigned int y1 = std::round(l.p2.y);
-        image.draw_zbuf_line(z_buffer, x0, y0, l.p1.z, x1, y1, l.p2.z, l.color, l.colorGr, l.isGradient);
-    }
-    return image;
-}
-
-img::EasyImage drawTriangLines(Figures3D& figures, const int &size,
-                             const img::Color &bc,
-                             const img::Color &bcGr,
-                             bool isGrB,
-                             const double &ar) {
+img::EasyImage draw3DLines(
+        Figures3D& figures, FigureType& type, const unsigned int& size, const img::Color& bc, const img::Color& bcGr, bool isGrB) {
     Lines2D lines = doProjection(figures);
     double maxX = lines[0].p1.x;
     double maxY = lines[0].p1.y;
@@ -204,18 +115,6 @@ img::EasyImage drawTriangLines(Figures3D& figures, const int &size,
     double maxXY = std::max(xRange, yRange);
     double imageX = size * (xRange / maxXY);
     double imageY = size * (yRange / maxXY);
-    unsigned int width;
-    unsigned int height;
-    if (ar == 0) {
-        width = (int) imageX;
-        height = (int) imageY;
-    } else if ((int) imageX == size) {
-        width = (int) imageX;
-        height =  (int) (width / ar);
-    } else {
-        height =  (int) imageY;
-        width = (int) (height / ar);
-    }
     // Scaling factor d
     double d = 0.95 * (imageX / xRange);
     // Centers
@@ -223,30 +122,72 @@ img::EasyImage drawTriangLines(Figures3D& figures, const int &size,
     double DCy = d * ((minY + maxY) / 2.0);
     double dx = (imageX / 2.0) - DCx;
     double dy = (imageY / 2.0) - DCy;
-    img::EasyImage image(width, height, bc, bcGr, isGrB);
-    ZBuffer z_buffer(std::round(imageX), std::round(imageY));
-    // Draw images
-    for(auto& figure : figures){
-        triangulate(figure);
-        for (auto& face : figure.faces) {
-            Vector3D A = figure.points[face.point_indexes[0]];
-            Vector3D B = figure.points[face.point_indexes[1]];
-            Vector3D C = figure.points[face.point_indexes[2]];
-            image.draw_zbuf_triang(z_buffer, A, B, C, d, dx, dy, figure.color, figure.colorGr, figure.isGradient);
-        }
+    // Multiply every coordinate with d,
+    // add dx and dy
+    // and draw lines
+    img::EasyImage image((unsigned int) imageX, (unsigned int) imageY, bc, bcGr, isGrB);
+    ZBuffer z_buffer;
+    switch (type) {
+        case Wires :
+            for(Line2D &l : lines){
+                // Update the coordinates
+                l.p1.x *= d;
+                l.p1.x += dx;
+                l.p2.x *= d;
+                l.p2.x += dx;
+                l.p1.y *= d;
+                l.p1.y += dy;
+                l.p2.y *= d;
+                l.p2.y += dy;
+                // Start drawing the lines
+                unsigned int x0 = (unsigned int) std::round(l.p1.x);
+                unsigned int y0 = (unsigned int) std::round(l.p1.y);
+                unsigned int x1 = (unsigned int) std::round(l.p2.x);
+                unsigned int y1 = (unsigned int) std::round(l.p2.y);
+                image.draw_line(x0, y0, x1, y1, l.color, l.colorGr, l.isGradient);
+            }
+            break;
+        case ZBuff :
+            z_buffer = ZBuffer((unsigned int) imageX, (unsigned int) imageY);
+            for (Line2D &l : lines) {
+                // Update the coordinates
+                l.p1.x *= d;
+                l.p1.x += dx;
+                l.p2.x *= d;
+                l.p2.x += dx;
+                l.p1.y *= d;
+                l.p1.y += dy;
+                l.p2.y *= d;
+                l.p2.y += dy;
+                // Start drawing the lines
+                unsigned int x0 = (unsigned int) std::round(l.p1.x);
+                unsigned int y0 = (unsigned int) std::round(l.p1.y);
+                unsigned int x1 = (unsigned int) std::round(l.p2.x);
+                unsigned int y1 = (unsigned int) std::round(l.p2.y);
+                image.draw_zbuf_line(z_buffer, x0, y0, l.p1.z, x1, y1, l.p2.z, l.color, l.colorGr, l.isGradient);
+            }
+            break;
+        case Trian :
+            z_buffer = ZBuffer((unsigned int) imageX, (unsigned int) imageY);
+            // Draw images
+            for(auto& figure : figures){
+                triangulate(figure);
+                for (auto& face : figure.faces) {
+                    Vector3D A = figure.points[face.point_indexes[0]];
+                    Vector3D B = figure.points[face.point_indexes[1]];
+                    Vector3D C = figure.points[face.point_indexes[2]];
+                    image.draw_zbuf_triang(z_buffer, A, B, C, d, dx, dy, figure.color, figure.colorGr, figure.isGradient);
+                }
+            }
+            break;
     }
     return image;
 }
 
-void recursivePrintString(LParser::LSystem2D &l_system,
-                          std::string &print_string,
-                          unsigned int &cur_it,
-                          unsigned int &max_it,
-                          double &alph_angle, double &delt_angle,
-                          Lines2D &lines,
-                          std::stack<double> &brStack,
-                          img::Color &lc, img::Color &lcGr, bool isGrL,
-                          double &x, double &y){
+void recursivePrintString(
+        LParser::LSystem2D& l_system, std::string& print_string, unsigned int& cur_it, unsigned int& max_it,
+        double& alph_angle, double& delt_angle, Lines2D& lines, std::stack<double>& brStack,
+        img::Color& lc, img::Color& lcGr, bool isGrL, double& x, double& y){
     for (char &c : print_string){
         // Iterate over characters of string
         if (cur_it < max_it) {
@@ -302,15 +243,10 @@ void recursivePrintString(LParser::LSystem2D &l_system,
     --cur_it;
 }
 
-void recursivePrintString(LParser::LSystem3D& l_system,
-                          std::string& print_string,
-                          unsigned int& cur_it,
-                          unsigned int& max_it,
-                          double& delt_angle, Figure& figure,
-                          std::stack<double>& doubleStack, 
-                          std::stack<Vector3D>& vectorStack,
-                          double& x, double& y, double& z,
-                          Vector3D& H, Vector3D& L, Vector3D& U){
+void recursivePrintString(
+        LParser::LSystem3D& l_system, std::string& print_string, unsigned int& cur_it, unsigned int& max_it,
+        double& delt_angle, Figure& figure, std::stack<double>& doubleStack, std::stack<Vector3D>& vectorStack,
+        double& x, double& y, double& z, Vector3D& H, Vector3D& L, Vector3D& U){
     for (char &c : print_string){
         // Iterate over characters of string
         if (cur_it < max_it) {

@@ -2,28 +2,25 @@
 #define PROJECT_3DFIGURES_H
 
 #include <iostream>
-#include <vector>
 #include <cmath>
 #include <stack>
-
-#include "vector.hh"
+#include <vector>
 #include "easy_image.hh"
 #include "l_parser.hh"
 #include "ini_configuration.hh"
+#include "vector.hh"
 
 const double PI = std::atan(1.0) * 4;
-
-// typedef std::vector<Line2D> Lines2D;
 
 class Face {
 public:
     std::vector<int> point_indexes;
 
     Face(){};
-    Face(const std::vector<int> &indexes) {
+    Face(const std::vector<int>& indexes) {
         Face::point_indexes = indexes;
     }
-    Face &operator=(Face const &face) {
+    Face &operator=(Face const& face) {
         point_indexes = face.point_indexes;
         return (*this);
     }
@@ -49,21 +46,21 @@ public:
 
 typedef std::vector<Figure> Figures3D;
 
-Matrix scaleFigure(const double &scale);
+Matrix scaleFigure(const double& scale);
 
-Matrix rotateX(const double &angle);
+Matrix rotateX(const double& angle);
 
-Matrix rotateY(const double &angle);
+Matrix rotateY(const double& angle);
 
-Matrix rotateZ(const double &angle);
+Matrix rotateZ(const double& angle);
 
-Matrix translate(const Vector3D &vector);
+Matrix translate(const Vector3D& vector);
 
-void applyTransformation(Figure &fig, const Matrix &m);
+void applyTransformation(Figure& fig, const Matrix& m);
 
-void applyTransformation(Figures3D &figs, const Matrix &m);
+void applyTransformation(Figures3D& figs, const Matrix& m);
 
-std::vector<double> toPolar(const Vector3D &point);
+std::vector<double> toPolar(const Vector3D& point);
 
 Matrix eyePointTrans(const Vector3D &eyepoint);
 
@@ -93,10 +90,8 @@ Figure createCone(const double &h, const unsigned int &n);
 
 Figure createCylinder(const double &h, const unsigned int &n);
 
-Figure createTorus(const double &r, const double &R, const int &m, const int &n);
+Figure createTorus(const double &r, const double &R, const unsigned int &m, const unsigned int &n);
 
-Figure createSpecialSphere(const double &r, const double &R, const int &m, const int &n);
-
-Figure create3DLSystem();
+Figure createSpecialSphere(const double &r, const double &R, const unsigned int &m, const unsigned int &n);
 
 #endif

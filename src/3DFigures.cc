@@ -1,6 +1,6 @@
 #include "3DFigures.hh"
 
-Matrix scaleFigure(const double &scale){
+Matrix scaleFigure(const double& scale){
     Matrix m;
     m(1, 1) = scale;
     m(2, 2) = scale;
@@ -8,7 +8,7 @@ Matrix scaleFigure(const double &scale){
     return m;
 }
 
-Matrix rotateX(const double &angle){
+Matrix rotateX(const double& angle){
     Matrix m;
     m(2, 2) = std::cos(angle);
     m(2, 3) = std::sin(angle);
@@ -17,7 +17,7 @@ Matrix rotateX(const double &angle){
     return m;
 }
 
-Matrix rotateY(const double &angle){
+Matrix rotateY(const double& angle){
     Matrix m;
     m(1, 1) = std::cos(angle);
     m(1, 3) = -std::sin(angle);
@@ -26,7 +26,7 @@ Matrix rotateY(const double &angle){
     return m;
 }
 
-Matrix rotateZ(const double &angle){
+Matrix rotateZ(const double& angle){
     Matrix m;
     m(1, 1) = std::cos(angle);
     m(1, 2) = std::sin(angle);
@@ -55,10 +55,7 @@ void applyTransformation(Figures3D &figs, const Matrix &m){
     }
 }
 
-void toPolar(const Vector3D &point,
-                            double &r,
-                            double &theta,
-                            double &phi){
+void toPolar(const Vector3D &point, double &r, double &theta, double &phi){
     // Original coordinates
     double x = point.x;
     double y = point.y;
@@ -374,7 +371,7 @@ Figure createCone(const double &h, const unsigned int &n){
         fig.faces.push_back(f);
     }
     Face fN;
-    for (unsigned int i=fig.points.size()-1; i>0; i--){
+    for (unsigned int i = (unsigned int) fig.points.size()-1; i>0; i--){
         fN.point_indexes.push_back(i);
     }
     return fig;
@@ -417,7 +414,7 @@ Figure createCylinder(const double &h, const unsigned int &n){
     return fig;
 }
 
-Figure createTorus(const double &r, const double &R, const int &m, const int &n){
+Figure createTorus(const double &r, const double &R, const unsigned int &m, const unsigned int &n){
     Figure fig;
     for (int i=0; i<n; i++){
         double u = (2*i*PI) / n;
@@ -445,7 +442,7 @@ Figure createTorus(const double &r, const double &R, const int &m, const int &n)
     return fig;
 }
 
-Figure createSpecialSphere(const double &r, const double &R, const int &m, const int &n) {
+Figure createSpecialSphere(const double &r, const double &R, const unsigned int &m, const unsigned int &n) {
     Figure fig;
     for (int i=0; i<n; i++){
         double u = (2*i*PI) / n;
@@ -474,10 +471,6 @@ Figure createSpecialSphere(const double &r, const double &R, const int &m, const
         fig.faces.push_back(f);
     }
     return fig;
-}
-
-Figure create3DLSystem() {
-    return Figure();
 }
 
 void triangulate(Figure& figure) {

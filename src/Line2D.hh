@@ -9,10 +9,16 @@
 #include <vector>
 #include <stack>
 #include <limits>
-#include "3DFigures.hh"
 #include "easy_image.hh"
-#include "vector.hh"
 #include "l_parser.hh"
+#include "vector.hh"
+#include "3DFigures.hh"
+
+enum FigureType {
+    Wires,
+    ZBuff,
+    Trian
+};
 
 class Point2D{
 public:
@@ -49,45 +55,30 @@ public:
 typedef std::vector<Point2D> Points2D;
 typedef std::vector<Line2D> Lines2D;
 
-Point2D doProjection(const Vector3D &point, const double &d=1.0);
+Point2D doProjection(const Vector3D& point, const double& d=1.0);
 
-Lines2D doProjection(Figures3D &figures);
+Lines2D doProjection(Figures3D& figures);
 
-img::EasyImage draw2DLines(Lines2D &lines, const int &size,
-                           const img::Color &bc=img::Color(),
-                           const img::Color &bcGr=img::Color(),
-                           bool isGrB=false,
-                           const double &ar=1);
+img::EasyImage draw2DLines(
+        Lines2D& lines, const unsigned int& size, const img::Color& bc, const img::Color& bcGr=img::Color(), bool isGrB=false);
 
-img::EasyImage drawZBufLines(Lines2D &lines, const int &size,
-                           const img::Color &bc=img::Color(),
-                           const img::Color &bcGr=img::Color(),
-                           bool isGrB=false,
-                           const double &ar=1);
+img::EasyImage draw3DLines(
+        Figures3D& figures, FigureType& type, const unsigned int& size, const img::Color& bc, const img::Color& bcGr=img::Color(), bool isGrB=false);
 
-img::EasyImage drawTriangLines(Figures3D& figures, const int& size,
-                             const img::Color& bc=img::Color(),
-                             const img::Color& bcGr=img::Color(),
-                             bool isGrB=false,
-                             const double& ar=1);
+img::EasyImage drawZBufLines(
+        Lines2D &lines, const unsigned int& size, const img::Color& bc, const img::Color& bcGr=img::Color(), bool isGrB=false);
 
-void recursivePrintString(LParser::LSystem2D &l_system,
-                         std::string &print_string,
-                         unsigned int &cur_it,
-                         unsigned int &max_it,
-                         double &alph_angle, double &delt_angle,
-                         Lines2D &lines,
-                         std::stack<double> &brStack,
-                         img::Color &lc, img::Color &lcGr, bool isGrL,
-                         double& x, double& y);
+img::EasyImage drawTriangLines(
+        Figures3D& figures, const unsigned int& size, const img::Color& bc, const img::Color& bcGr=img::Color(), bool isGrB=false);
 
-void recursivePrintString(LParser::LSystem3D& l_system,
-                         std::string& print_string,
-                         unsigned int& cur_it, unsigned int& max_it,
-                         double& delt_angle, Figure& figure,
-                         std::stack<double>& doubleStack,
-                         std::stack<Vector3D>& vectorStack,
-                         double& x, double& y, double& z,
-                         Vector3D& H, Vector3D& L, Vector3D& U);
+void recursivePrintString(
+        LParser::LSystem2D& l_system, std::string& print_string, unsigned int& cur_it, unsigned int& max_it,
+        double& alph_angle, double& delt_angle, Lines2D& lines, std::stack<double>& brStack,
+        img::Color& lc, img::Color& lcGr, bool isGrL, double& x, double& y);
+
+void recursivePrintString(
+        LParser::LSystem3D& l_system, std::string& print_string, unsigned int& cur_it, unsigned int& max_it,
+        double& delt_angle, Figure& figure, std::stack<double>& doubleStack, std::stack<Vector3D>& vectorStack,
+        double& x, double& y, double& z, Vector3D& H, Vector3D& L, Vector3D& U);
 
 #endif //PROJECT_LINE2D_H

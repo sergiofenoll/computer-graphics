@@ -232,9 +232,7 @@ img::Color const& img::EasyImage::operator()(unsigned int x, unsigned int y) con
 }
 
 void img::EasyImage::draw_line(
-                    unsigned int x0, unsigned int y0,
-                    unsigned int x1, unsigned int y1,
-                    Color color, Color colorGr, bool isGradient)
+		unsigned int& x0, unsigned int& y0, unsigned int& x1, unsigned int& y1, Color color, Color colorGr, bool isGradient)
 {
 	assert(x0 < this->width && y0 < this->height);
 	assert(x1 < this->width && y1 < this->height);
@@ -317,10 +315,8 @@ void img::EasyImage::draw_line(
 	}
 }
 
-void img::EasyImage::draw_zbuf_line(ZBuffer& z_buffer,
-                    unsigned int x0, unsigned int y0, double z0,
-                    unsigned int x1, unsigned int y1, double z1,
-                    Color color, Color colorGr, bool isGradient) {
+void img::EasyImage::draw_zbuf_line(
+        ZBuffer& z_buffer, unsigned int& x0, unsigned int& y0, double& z0, unsigned int& x1, unsigned int& y1, double& z1, Color color, Color colorGr, bool isGradient) {
     assert(x0 < this->width && y0 < this->height);
     assert(x1 < this->width && y1 < this->height);
     if (x0 == x1)
@@ -453,10 +449,8 @@ void img::EasyImage::draw_zbuf_line(ZBuffer& z_buffer,
     }
 }
 
-void img::EasyImage::draw_zbuf_triang(ZBuffer& z_buffer,
-                    Vector3D& A, Vector3D& B, Vector3D& C,
-                    double d, double dx, double dy,
-                    Color color, Color colorGr, bool isGradient) {
+void img::EasyImage::draw_zbuf_triang(
+        ZBuffer& z_buffer, Vector3D& A, Vector3D& B, Vector3D& C, const double& d, const double& dx, const double& dy, Color color, Color colorGr, bool isGradient) {
     double xA = -((d * A.x) / (A.z)) + dx;
     double yA = -((d * A.y) / (A.z)) + dy;
     double xB = -((d * B.x) / (B.z)) + dx;
@@ -474,8 +468,7 @@ void img::EasyImage::draw_zbuf_triang(ZBuffer& z_buffer,
     Vector3D u = B - A;
     Vector3D v = C - A;
     Vector3D w; w = u.cross_equals(v);
-    // Vector3D w = Vector3D::vector(u.y*v.z - u.z*v.y, u.z*v.x - u.x*v.z, u.x*v.y - u.y*v.x);
-    double k = (w.x * A.x) + (w.y + A.y) + (w.z + A.z);
+    double k = (w.x * A.x) + (w.y * A.y) + (w.z * A.z);
     double dzdx = -(w.x / (d * k));
     double dzdy = -(w.y / (d * k));
 
@@ -510,7 +503,6 @@ void img::EasyImage::draw_zbuf_triang(ZBuffer& z_buffer,
             xL_BC = xI;
             xR_BC = xI;
         }
-
         int xL = std::round(std::min(std::min(xL_AB, xL_AC), xL_BC) + 0.5);
         int xR = std::round(std::max(std::max(xR_AB, xR_AC), xR_BC) - 0.5);
 

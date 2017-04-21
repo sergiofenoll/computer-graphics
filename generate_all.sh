@@ -23,10 +23,10 @@ cp input/$FOLDER*.L2D input/$FOLDER*.L3D ./ 2> /dev/null
 for FILE in $(find input/$FOLDER*.ini)
 do
     echo "Processing $FILE"
-    ./engine $FILE
+    cmake-build-debug/engine $FILE
 done
 
-rm *.L3D *.L2D 2> /dev/null
+rm ./*.L3D ./*.L2D 2> /dev/null
 
 if [ "$OPEN" == "yes" ];
 then

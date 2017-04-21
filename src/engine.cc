@@ -1,47 +1,17 @@
+#include <fstream>
+#include <vector>
+#include <cmath>
+#include <set>
+#include <stack>
+#include <iostream>
 #include "easy_image.hh"
 #include "ini_configuration.hh"
 #include "l_parser.hh"
+#include "vector.hh"
 #include "Line2D.hh"
 #include "3DFigures.hh"
 
-#include <cmath>
-#include <fstream>
-#include <iostream>
-#include <stdexcept>
-#include <string>
-#include <stdlib.h>
-#include <time.h>
-#include <stack>
-
-// Helper functions
-
-inline int roundToInt(double d){
-    return d<0 ? std::ceil(d-0.5) : std::floor(d+0.5);
-}
-
-img::Color colorGradient(img::Color &a, img::Color &b, double &t){
-    return img::Color(
-        roundToInt(a.red + (b.red - a.red) * t),
-        roundToInt(a.green + (b.green - a.green) * t),
-        roundToInt(a.blue + (b.blue - a.blue) * t));
-}
-
-void gradientBg(img::EasyImage &image, img::Color &a, img::Color &b){
-    for (unsigned int x=0; x<image.get_width(); x++){
-        for (unsigned int y=0; y<image.get_height(); y++){
-            double p = x / (image.get_width() - 1.0);
-            image(x,y).red = roundToInt((1 - p) * a.red + p * b.red + 0.5);
-            image(x,y).green = roundToInt((1 - p) * a.green + p * b.green + 0.5);
-            image(x,y).blue = roundToInt((1 - p) * a.blue + p * b.blue + 0.5);
-        }
-    }
-}
-
-
-
-// Image generating functions
-
-img::EasyImage IntroColorRectangle(const ini::Configuration &configuration){
+img::EasyImage IntroColorRectangle(const ini::Configuration& configuration){
     const ini::Section imgProp = configuration["ImageProperties"];
     const unsigned int w = imgProp["width"].as_int_or_die();
     const unsigned int h = imgProp["height"].as_int_or_die();
@@ -49,15 +19,15 @@ img::EasyImage IntroColorRectangle(const ini::Configuration &configuration){
     // Iterate over pixels and colour them in
     for (unsigned int x=0; x<w; x++) {
         for (unsigned int y=0; y<h; y++) {
-            image(x, y).red = x;
-            image(x, y).blue = y;
-            image(x, y).green = (x + y) % 256;
+            image(x, y).red = (uint8_t) x;
+            image(x, y).blue = (uint8_t) y;
+            image(x, y).green = (uint8_t) (x + y) % 256;
         }
     }
     return image;
 }
 
-img::EasyImage IntroBlocks(const ini::Configuration &configuration){
+img::EasyImage IntroBlocks(const ini::Configuration& configuration){
     const ini::Section imgProp = configuration["ImageProperties"];
     const unsigned int w = imgProp["width"].as_int_or_die();
     const unsigned int h = imgProp["height"].as_int_or_die();
@@ -77,26 +47,26 @@ img::EasyImage IntroBlocks(const ini::Configuration &configuration){
             if(invertColors) {
                 if ((xCoord+yCoord) % 2 == 0) {
                     // ZWART
-                    image(x, y).red = roundToInt(colorBlack[0] * 255);
-                    image(x, y).blue = roundToInt(colorBlack[1] * 255);
-                    image(x, y).green = roundToInt(colorBlack[2] * 255);
+                    image(x, y).red = (uint8_t) std::round(colorBlack[0] * 255);
+                    image(x, y).blue = (uint8_t) std::round(colorBlack[1] * 255);
+                    image(x, y).green = (uint8_t) std::round(colorBlack[2] * 255);
                 } else {
                     // WIT
-                    image(x, y).red = roundToInt(colorWhite[0] * 255);
-                    image(x, y).blue = roundToInt(colorWhite[1] * 255);
-                    image(x, y).green = roundToInt(colorWhite[2] * 255);
+                    image(x, y).red = (uint8_t) std::round(colorWhite[0] * 255);
+                    image(x, y).blue = (uint8_t) std::round(colorWhite[1] * 255);
+                    image(x, y).green = (uint8_t) std::round(colorWhite[2] * 255);
                 }
             } else {
                 if ((xCoord+yCoord) % 2 == 0) {
                     // WIT
-                    image(x, y).red = roundToInt(colorWhite[0] * 255);
-                    image(x, y).blue = roundToInt(colorWhite[1] * 255);
-                    image(x, y).green = roundToInt(colorWhite[2] * 255);
+                    image(x, y).red = (uint8_t) std::round(colorWhite[0] * 255);
+                    image(x, y).blue = (uint8_t) std::round(colorWhite[1] * 255);
+                    image(x, y).green = (uint8_t) std::round(colorWhite[2] * 255);
                 } else {
                     // ZWART
-                    image(x, y).red = roundToInt(colorBlack[0] * 255);
-                    image(x, y).blue = roundToInt(colorBlack[1] * 255);
-                    image(x, y).green = roundToInt(colorBlack[2] * 255);
+                    image(x, y).red = (uint8_t) std::round(colorBlack[0] * 255);
+                    image(x, y).blue = (uint8_t) std::round(colorBlack[1] * 255);
+                    image(x, y).green = (uint8_t) std::round(colorBlack[2] * 255);
                 }
             }
         }
@@ -104,7 +74,7 @@ img::EasyImage IntroBlocks(const ini::Configuration &configuration){
     return image;
 }
 
-img::EasyImage IntroLines(const ini::Configuration &configuration){
+img::EasyImage IntroLines(const ini::Configuration& configuration){
     const ini::Section imgProp = configuration["ImageProperties"];
     const unsigned int w = imgProp["width"].as_int_or_die();
     const unsigned int h = imgProp["height"].as_int_or_die();
@@ -121,29 +91,33 @@ img::EasyImage IntroLines(const ini::Configuration &configuration){
     double hInterval = (double) h /(double) (nrLines-1);
     double wInterval = (double) w / (double) (nrLines-1);
 
-    image.clear(img::Color(bg[0]*255, bg[1]*255, bg[2]*255));
+    image.clear(img::Color((uint8_t) (bg[0]*255), (uint8_t) (bg[1]*255), (uint8_t) (bg[2]*255)));
+
+    unsigned int zero = 0;
+    unsigned int height = h - 1;
+    unsigned int width = w - 1;
 
     if (figure == "QuarterCircle"){
         for(unsigned int i=0; i<nrLines; i++){
-            image.draw_line(0, startYCoor, endXCoor, h-1, img::Color(col[0]*255, col[1]*255, col[2]*255));
-            startYCoor = startYCoor + roundToInt(wInterval);
-            endXCoor = endXCoor + roundToInt(hInterval);
+            image.draw_line(zero, startYCoor, endXCoor, height, img::Color(col[0]*255, col[1]*255, col[2]*255));
+            startYCoor = startYCoor + (unsigned int) std::round(wInterval);
+            endXCoor = endXCoor + (unsigned int) std::round(hInterval);
         }
-        image.draw_line(0, h-1, w-1, h-1, img::Color(col[0]*255, col[1]*255, col[2]*255));
+        image.draw_line(zero, height, width, height, img::Color(col[0]*255, col[1]*255, col[2]*255));
     } else if(figure == "Eye"){
         for(unsigned int i=0; i<nrLines; i++){
-            image.draw_line(startXCoor, 0, w-1, endYCoor, img::Color(col[0]*255, col[1]*255, col[2]*255));
-            image.draw_line(0, startYCoor, endXCoor, h-1, img::Color(col[0]*255, col[1]*255, col[2]*255));
-            startXCoor = startXCoor + roundToInt(wInterval);
-            startYCoor = startYCoor + roundToInt(wInterval);
-            endXCoor = endXCoor + roundToInt(hInterval);
-            endYCoor = endYCoor + roundToInt(hInterval);
+            image.draw_line(startXCoor, zero, width, endYCoor, img::Color(col[0]*255, col[1]*255, col[2]*255));
+            image.draw_line(zero, startYCoor, endXCoor, height, img::Color(col[0]*255, col[1]*255, col[2]*255));
+            startXCoor = startXCoor + (unsigned int) std::round(wInterval);
+            startYCoor = startYCoor + (unsigned int) std::round(wInterval);
+            endXCoor = endXCoor + (unsigned int) std::round(hInterval);
+            endYCoor = endYCoor + (unsigned int) std::round(hInterval);
         }
-        image.draw_line(0, h-1, w-1, h-1, img::Color(col[0]*255, col[1]*255, col[2]*255));
-        image.draw_line(w-1, 0, w-1, h-1, img::Color(col[0]*255, col[1]*255, col[2]*255));
+        image.draw_line(zero, height, width, height, img::Color(col[0]*255, col[1]*255, col[2]*255));
+        image.draw_line(width, zero, width, height, img::Color(col[0]*255, col[1]*255, col[2]*255));
     } else if(figure == "Diamond"){
-        unsigned int hMid = roundToInt((h-1)/2);
-        unsigned int wMid = roundToInt((w-1)/2);
+        unsigned int hMid = (unsigned int) std::round((h-1)/2);
+        unsigned int wMid = (unsigned int) std::round((w-1)/2);
         unsigned int startX = startXCoor;
         unsigned int startYTop = h-1;
         unsigned int startYBot = 0;
@@ -155,25 +129,22 @@ img::EasyImage IntroLines(const ini::Configuration &configuration){
             image.draw_line(startX, hMid, wMid, endYBot, img::Color(col[0]*255, col[1]*255, col[2]*255));
             image.draw_line(wMid, startYTop, endX, hMid, img::Color(col[0]*255, col[1]*255, col[2]*255));
             image.draw_line(wMid, startYBot, endX, hMid, img::Color(col[0]*255, col[1]*255, col[2]*255));
-            image.draw_line(wMid, hMid, w-1, hMid, img::Color(col[0]*255, col[1]*255, col[2]*255));
-            startX += roundToInt(wInterval/2);
-            startYTop -= roundToInt(hInterval/2);
-            startYBot += roundToInt(hInterval/2);
-            endX += roundToInt(wInterval/2);
-            endYTop += roundToInt(hInterval/2);
-            endYBot -= roundToInt(hInterval/2);
+            image.draw_line(wMid, hMid, width, hMid, img::Color(col[0]*255, col[1]*255, col[2]*255));
+            startX += std::round(wInterval/2);
+            startYTop -= std::round(hInterval/2);
+            startYBot += std::round(hInterval/2);
+            endX += std::round(wInterval/2);
+            endYTop += std::round(hInterval/2);
+            endYBot -= std::round(hInterval/2);
         }
     }
     return image;
 }
 
-img::EasyImage L2DSystem(const ini::Configuration &configuration){
+img::EasyImage LSystem(const ini::Configuration& configuration){
     ini::Section general = configuration["General"];
     std::string type = general["type"].as_string_or_die();
-    const double size = general["size"].as_double_or_die();
-    std::vector<double> aspectratio = {0, 1};
-    general["aspectratio"].as_double_tuple_if_exists(aspectratio);
-    double ar = aspectratio[0] / aspectratio[1];
+    const int size = general["size"].as_int_or_die();
 
     const std::vector<double> bcVector = general["backgroundcolor"].as_double_tuple_or_die();
     img::Color bc(bcVector[0]*255, bcVector[1]*255, bcVector[2]*255);
@@ -209,45 +180,39 @@ img::EasyImage L2DSystem(const ini::Configuration &configuration){
     recursivePrintString(l_system, init, cur_it, max_it,
                          alph_angle, delt_angle, lines, brStack,
                          lc, lcGr, isGrL, x, y);
-    img::EasyImage image = draw2DLines(lines, size, bc, bcGr, isGrB, ar);
+    img::EasyImage image = draw2DLines(lines, size, bc, bcGr, isGrB);
     return image;
 };
 
-img::EasyImage Wireframe(const ini::Configuration &configuration){
+img::EasyImage Wireframe(const ini::Configuration& configuration){
     ini::Section general = configuration["General"];
+    FigureType fig_type = Wires;
 
     // ##### ZBuffered Wireframe #####
-    bool isZBuf = false;
-    if (general["type"].as_string_or_die() == "ZBufferedWireframe") isZBuf = true;
+    if (general["type"].as_string_or_die() == "ZBufferedWireframe") fig_type = ZBuff;
 
     // ##### ZBuffering with triangles #####
-    bool isTriang = false;
-    if (general["type"].as_string_or_die() == "ZBuffering") isTriang = true;
+    if (general["type"].as_string_or_die() == "ZBuffering") fig_type = Trian;
 
     // ##### Image size #####
-    double size = general["size"].as_double_or_die();
-
-    // ##### Aspect ratio #####
-    std::vector<double> aspectratio = {0, 1};
-    general["aspectratio"].as_double_tuple_if_exists(aspectratio);
-    double ar = aspectratio[0] / aspectratio[1];
+    const unsigned int size = (const unsigned int) general["size"].as_double_or_die();
 
     // ##### Background colour #####
     const std::vector<double> bcVector = general["backgroundcolor"].as_double_tuple_or_die();
-    img::Color bc(bcVector[0]*255, bcVector[1]*255, bcVector[2]*255);
+    img::Color bc((uint8_t) (bcVector[0] * 255), (uint8_t) (bcVector[1] * 255), (uint8_t) (bcVector[2] * 255));
 
     // ##### Background gradient #####
     std::vector<double> bcVectorGr = {0, 0, 0};
     bool isGrB = general["gradient"].as_double_tuple_if_exists(bcVectorGr);
-    img::Color bcGr(bcVectorGr[0]*255, bcVectorGr[1]*255, bcVectorGr[2]*255);
+    img::Color bcGr((uint8_t) (bcVectorGr[0]*255), (uint8_t) (bcVectorGr[1]*255), (uint8_t) (bcVectorGr[2]*255));
 
-    int nrFig = general["nrFigures"].as_int_or_die();
+    const unsigned int nrFig = (const unsigned int) general["nrFigures"].as_int_or_die();
 
     std::vector<double> e = general["eye"].as_double_tuple_or_die();
     Vector3D eye = Vector3D::point(e[0], e[1], e[2]);
 
     Figures3D figures;
-    for (int i=0; i<nrFig; i++){
+    for (unsigned int i=0; i<nrFig; i++){
         ini::Section figure = configuration["Figure" + std::to_string(i)];
         std::string type = figure["type"].as_string_or_die();
 
@@ -289,27 +254,27 @@ img::EasyImage Wireframe(const ini::Configuration &configuration){
             fig = createDodecahedron();
         } else if (type=="Cylinder"){
             double h = figure["height"].as_double_or_die();
-            int n = figure["n"].as_int_or_die();
+            const unsigned int n = (const unsigned int) figure["n"].as_int_or_die();
             fig = createCylinder(h, n);
         } else if (type=="Cone"){
             double h = figure["height"].as_double_or_die();
-            int n = figure["n"].as_int_or_die();
+            const unsigned int n = (const unsigned int) figure["n"].as_int_or_die();
             fig = createCone(h, n);
         } else if(type=="Sphere"){
-            int n = figure["n"].as_int_or_die();
+            const unsigned int n = (const unsigned int) figure["n"].as_int_or_die();
             double radius;
             fig = createSphere(radius, n);
         } else if(type=="Torus"){
             double r = figure["r"].as_double_or_die();
             double R = figure["R"].as_double_or_die();
-            int m = figure["m"].as_int_or_die();
-            int n = figure["n"].as_int_or_die();
+            const unsigned int m = figure["m"].as_int_or_die();
+            const unsigned int n = figure["n"].as_int_or_die();
             fig = createTorus(r, R, m, n);
         } else if(type=="SpecialSphere"){
             double r = figure["r"].as_double_or_die();
             double R = figure["R"].as_double_or_die();
-            int m = figure["m"].as_int_or_die();
-            int n = figure["n"].as_int_or_die();
+            const unsigned int m = figure["m"].as_int_or_die();
+            const unsigned int n = figure["n"].as_int_or_die();
             fig = createSpecialSphere(r, R, m, n);
         } else if(type=="3DLSystem") {
             std::string inf = figure["inputfile"].as_string_or_die();
@@ -353,18 +318,10 @@ img::EasyImage Wireframe(const ini::Configuration &configuration){
         applyTransformation(fig, V);
         figures.push_back(fig);
     }
-    Lines2D lines;
-    lines = doProjection(figures);
-    if (isZBuf) {
-        return drawZBufLines(lines, size, bc, bcGr, isGrB, ar);
-    } else if (isTriang) {
-        return drawTriangLines(figures, size, bc, bcGr, isGrB, ar);
-    } else {
-        return draw2DLines(lines, size, bc, bcGr, isGrB, ar);
-    }
+    return draw3DLines(figures, fig_type, size, bc, bcGr, isGrB);
 }
 
-img::EasyImage generate_image(const ini::Configuration &configuration){
+img::EasyImage generate_image(const ini::Configuration& configuration){
     std::string type = configuration["General"]["type"].as_string_or_die();
     if(type=="IntroColorRectangle") {
         return IntroColorRectangle(configuration);
@@ -373,7 +330,7 @@ img::EasyImage generate_image(const ini::Configuration &configuration){
     } else if(type=="IntroLines"){
         return IntroLines(configuration);
     } else if(type=="2DLSystem" or type=="2DLSystemStoch"){
-        return L2DSystem(configuration);
+        return LSystem(configuration);
     } else if (type=="Wireframe" or type=="ZBufferedWireframe" or type == "ZBuffering"){
         return Wireframe(configuration);
     }
@@ -382,7 +339,7 @@ img::EasyImage generate_image(const ini::Configuration &configuration){
 }
 
 int main(int argc, char const* argv[]){
-    std::srand(time(NULL)); // Random seed
+    std::srand((unsigned int) time(NULL)); // Random seed
     int retVal = 0;
     try{
         for(int i = 1; i < argc; ++i){
