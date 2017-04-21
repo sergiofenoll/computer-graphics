@@ -474,6 +474,7 @@ void img::EasyImage::draw_zbuf_triang(ZBuffer& z_buffer,
     Vector3D u = B - A;
     Vector3D v = C - A;
     Vector3D w; w = u.cross_equals(v);
+    // Vector3D w = Vector3D::vector(u.y*v.z - u.z*v.y, u.z*v.x - u.x*v.z, u.x*v.y - u.y*v.x);
     double k = (w.x * A.x) + (w.y + A.y) + (w.z + A.z);
     double dzdx = -(w.x / (d * k));
     double dzdy = -(w.y / (d * k));
@@ -488,21 +489,24 @@ void img::EasyImage::draw_zbuf_triang(ZBuffer& z_buffer,
 
         // PQ == AB
         if ((((yI - yA) * (yI - yB)) <= 0) and yA != yB) {
-            double xI = xB + ((xA - xB) * ((yI - yB) / (yA - yB)));
+            // double xI = xB + ((xA - xB) * ((yI - yB) / (yA - yB)));
+            double xI = xA + ((xB - xA) * ((yI - yA) / (yB - yA)));
             xL_AB = xI;
             xR_AB = xI;
         }
 
         // PQ == AC
         if ((((yI - yA) * (yI - yC)) <= 0) and yA != yC) {
-            double xI = xC + ((xA - xC) * ((yI - yC) / (yA - yC)));
+            // double xI = xC + ((xA - xC) * ((yI - yC) / (yA - yC)));
+            double xI = xA + ((xC - xA) * ((yI - yA) / (yC - yA)));
             xL_AC = xI;
             xR_AC = xI;
         }
 
         // PQ == BC
         if ((((yI - yB) * (yI - yC)) <= 0) and yB != yC) {
-            double xI = xC + ((xB - xC) * ((yI - yC) / (yB - yC)));
+            // double xI = xC + ((xB - xC) * ((yI - yC) / (yB - yC)));
+            double xI = xB + ((xC - xB) * ((yI - yB) / (yC - yB)));
             xL_BC = xI;
             xR_BC = xI;
         }

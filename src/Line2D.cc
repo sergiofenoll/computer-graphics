@@ -224,7 +224,7 @@ img::EasyImage drawTriangLines(Figures3D& figures, const int &size,
     double dx = (imageX / 2.0) - DCx;
     double dy = (imageY / 2.0) - DCy;
     img::EasyImage image(width, height, bc, bcGr, isGrB);
-    ZBuffer z_buffer(width, height);
+    ZBuffer z_buffer(std::round(imageX), std::round(imageY));
     // Draw images
     for(auto& figure : figures){
         triangulate(figure);

@@ -6,11 +6,11 @@ ls -1
 read -p 'What directory? ' -e FOLDER
 cd ..
 
-echo "Do you want to delete the images afterwards?"
+echo "Do you want to open the images afterwards?"
 while true;
 do
-    read -p "(yes/no): " DEL
-    if [ "$DEL" = "yes" ] || [ "$DEL" = "no" ];
+    read -p "(yes/no): " OPEN
+    if [ "$OPEN" = "yes" ] || [ "$OPEN" = "no" ];
     then
         break
     else
@@ -18,7 +18,7 @@ do
     fi
 done
 
-cp -f input/$FOLDER*.L2D input/$FOLDER*.L3D ./
+cp input/$FOLDER*.L2D input/$FOLDER*.L3D ./ 2> /dev/null
 
 for FILE in $(find input/$FOLDER*.ini)
 do
@@ -26,11 +26,9 @@ do
     ./engine $FILE
 done
 
-eog input/$FOLDER*.bmp input/$FOLDER*.png
+rm *.L3D *.L2D 2> /dev/null
 
-rm -f *.L3D *.L2D
-
-if [ "$DEL" == "yes" ];
+if [ "$OPEN" == "yes" ];
 then
-    rm input/$FOLDER*.bmp
+    eog input/$FOLDER*.bmp input/$FOLDER*.png
 fi
