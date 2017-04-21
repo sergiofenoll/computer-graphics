@@ -462,8 +462,8 @@ void img::EasyImage::draw_zbuf_triang(
     double yG = (yA + yB + yC) / 3.0;
     double zG_inverted = (1.0 / (3.0 * A.z)) + (1.0 / (3.0 * B.z)) + (1.0 / (3.0 * C.z));
 
-    int yMin = std::round(std::min(std::min(yA, yB), yC) + 0.5);
-    int yMax = std::round(std::max(std::max(yA, yB), yC) - 0.5);
+    int yMin = (int) std::round(std::min(std::min(yA, yB), yC) + 0.5);
+    int yMax = (int) std::round(std::max(std::max(yA, yB), yC) - 0.5);
 
     Vector3D u = B - A;
     Vector3D v = C - A;
@@ -472,7 +472,7 @@ void img::EasyImage::draw_zbuf_triang(
     double dzdx = -(w.x / (d * k));
     double dzdy = -(w.y / (d * k));
 
-    for (unsigned int yI=yMin; yI<=yMax; yI++) {
+    for (unsigned int yI = (unsigned int) yMin; yI <= yMax; yI++) {
         double xL_AB = inf;
         double xL_AC = inf;
         double xL_BC = inf;
@@ -503,12 +503,12 @@ void img::EasyImage::draw_zbuf_triang(
             xL_BC = xI;
             xR_BC = xI;
         }
-        int xL = std::round(std::min(std::min(xL_AB, xL_AC), xL_BC) + 0.5);
-        int xR = std::round(std::max(std::max(xR_AB, xR_AC), xR_BC) - 0.5);
+        int xL = (int) std::round(std::min(std::min(xL_AB, xL_AC), xL_BC) + 0.5);
+        int xR = (int) std::round(std::max(std::max(xR_AB, xR_AC), xR_BC) - 0.5);
 
         // if (xL < 0) continue;
 
-        for (unsigned int xI=xL; xI<=xR; xI++) {
+        for (unsigned int xI = (unsigned int) xL; xI <= xR; xI++) {
             double z_inv = (1.0001 * zG_inverted) + (((double) xI - xG) * dzdx) + (((double) yI - yG) * dzdy);
             if (z_inv < z_buffer(xI, yI)) {
                 z_buffer(xI, yI) = z_inv;

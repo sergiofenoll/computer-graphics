@@ -65,12 +65,6 @@ img::EasyImage draw2DLines(
 img::EasyImage draw3DLines(
         Figures3D& figures, FigureType& type, const unsigned int& size, const img::Color& bc, const img::Color& bcGr=img::Color(), bool isGrB=false);
 
-img::EasyImage drawZBufLines(
-        Lines2D &lines, const unsigned int& size, const img::Color& bc, const img::Color& bcGr=img::Color(), bool isGrB=false);
-
-img::EasyImage drawTriangLines(
-        Figures3D& figures, const unsigned int& size, const img::Color& bc, const img::Color& bcGr=img::Color(), bool isGrB=false);
-
 void recursivePrintString(
         LParser::LSystem2D& l_system, std::string& print_string, unsigned int& cur_it, unsigned int& max_it,
         double& alph_angle, double& delt_angle, Lines2D& lines, std::stack<double>& brStack,
