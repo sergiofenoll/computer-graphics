@@ -5,4 +5,3 @@ engine
 ext_in/
 .generate_all.sh.bak
 *.bmp
-*.ini
