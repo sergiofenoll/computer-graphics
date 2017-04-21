@@ -24,7 +24,7 @@ set(SOURCE_FILES
 add_executable(engine ${SOURCE_FILES})
 # Create tgz archive
 add_custom_target(tgz COMMAND
-    ${CMAKE_COMMAND} -E tar "cfvz" "engine.tgz"
+    ${CMAKE_COMMAND} -E tar "cfvz" "../engine.tgz"
        "${CMAKE_CURRENT_SOURCE_DIR}/README.md"
-       "${CMAKE_CURRENT_SOURCE_DIR}/Makefile"
+       "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug/Makefile"
        "${CMAKE_CURRENT_SOURCE_DIR}/src/")
