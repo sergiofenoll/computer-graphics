@@ -450,7 +450,9 @@ void img::EasyImage::draw_zbuf_line(
 }
 
 void img::EasyImage::draw_zbuf_triang(
-        ZBuffer& z_buffer, Vector3D& A, Vector3D& B, Vector3D& C, const double& d, const double& dx, const double& dy, Color color, Color colorGr, bool isGradient) {
+        ZBuffer& z_buffer, Vector3D& A, Vector3D& B, Vector3D& C, const double& d, const double& dx, const double& dy, fig::Color& ambientReflection,
+        fig::Color& diffuseReflection, fig::Color& specularReflection, double& reflectionCoeff, Lights& lights, fig::Color colorGr, bool isGradient) {
+
     double xA = -((d * A.x) / (A.z)) + dx;
     double yA = -((d * A.y) / (A.z)) + dy;
     double xB = -((d * B.x) / (B.z)) + dx;
@@ -471,6 +473,40 @@ void img::EasyImage::draw_zbuf_triang(
     double k = (w.x * A.x) + (w.y * A.y) + (w.z * A.z);
     double dzdx = -(w.x / (d * k));
     double dzdy = -(w.y / (d * k));
+
+    // Color
+    std::vector<double> color_values = {0, 0, 0};
+    Vector3D n = w;
+    n.normalise();
+    std::vector<Light*> pnt_spc_lights;
+    for (auto& light : lights) {
+        if (light.isAmbient) {
+            color_values[0] += (ambientReflection.get_red_value() * light.ambientLight[0]);
+            color_values[1] += (ambientReflection.get_green_value() * light.ambientLight[1]);
+            color_values[2] += (ambientReflection.get_blue_value() * light.ambientLight[2]);
+        }
+        if (light.isDiffuseInf) {
+            double cos_alpha = 0;
+            Vector3D l = light.lightDirection;
+            l.normalise();
+            l = -l;
+            double val = n.dot(l);
+            if (val > 0) cos_alpha = val;
+            color_values[0] += (diffuseReflection.get_red_value() * light.diffuseLight[0] * cos_alpha);
+            color_values[1] += (diffuseReflection.get_green_value() * light.diffuseLight[1] * cos_alpha);
+            color_values[2] += (diffuseReflection.get_blue_value() * light.diffuseLight[2] * cos_alpha);
+        }
+        if (light.isDiffusePnt) {
+            pnt_spc_lights.push_back(&light);
+        }
+        if (light.isSpecular) {
+            pnt_spc_lights.push_back(&light);
+        }
+        if (color_values[0] > 1.0) color_values[0] = 1.0;
+        if (color_values[1] > 1.0) color_values[1] = 1.0;
+        if (color_values[2] > 1.0) color_values[2] = 1.0;
+    }
+    img::Color color(color_values[0] * 255, color_values[1] * 255, color_values[2] * 255);
 
     for (unsigned int yI = (unsigned int) yMin; yI <= yMax; yI++) {
         double xL_AB = inf;
@@ -512,15 +548,47 @@ void img::EasyImage::draw_zbuf_triang(
             double z_inv = (1.0001 * zG_inverted) + (((double) xI - xG) * dzdx) + (((double) yI - yG) * dzdy);
             if (z_inv < z_buffer(xI, yI)) {
                 z_buffer(xI, yI) = z_inv;
+                double cos_alpha = 0;
+                Vector3D l = Vector3D::vector(0, 0, 0);
+                double zEye = 1.0 / z_inv;
+                double xEye = (xI - dx) * (-zEye) / d;
+                double yEye = (yI - dy) * (-zEye) / d;
+                Vector3D P = Vector3D::point(xEye, yEye, zEye);
+                std::vector<double> pnt_spec_color = color_values;
+                for (auto light : pnt_spc_lights) {
+                    if (light->isDiffuseInf) {
+                        l = Vector3D::normalise(light->lightDirection);
+                    }
+                    else {
+                        l = Vector3D::normalise(light->location - P);
+                    }
+                    cos_alpha = n.dot(l);
+                    cos_alpha < 0 ? cos_alpha = 0 : cos_alpha;
+                    pnt_spec_color[0] += (diffuseReflection.get_red_value() * light->diffuseLight[0] * cos_alpha);
+                    pnt_spec_color[1] += (diffuseReflection.get_green_value() * light->diffuseLight[1] * cos_alpha);
+                    pnt_spec_color[2] += (diffuseReflection.get_blue_value() * light->diffuseLight[2] * cos_alpha);
+                    if (light->isSpecular) {
+                        Vector3D r = Vector3D::normalise((2 * cos_alpha * n) - l);
+                        Vector3D cam = Vector3D::normalise(Vector3D::vector(0, 0, 0) - P);
+                        double cos_beta = std::pow(r.dot(cam), reflectionCoeff);
+                        pnt_spec_color[0] += (specularReflection.get_red_value() * light->specularLight[0] * cos_beta);
+                        pnt_spec_color[1] += (specularReflection.get_green_value() * light->specularLight[1] * cos_beta);
+                        pnt_spec_color[2] += (specularReflection.get_blue_value() * light->specularLight[2] * cos_beta);
+                    }
+                    if (pnt_spec_color[0] > 1.0) pnt_spec_color[0] = 1.0;
+                    if (pnt_spec_color[1] > 1.0) pnt_spec_color[1] = 1.0;
+                    if (pnt_spec_color[2] > 1.0) pnt_spec_color[2] = 1.0;
+                }
+                color = img::Color(pnt_spec_color[0] * 255, pnt_spec_color[1] * 255, pnt_spec_color[2] * 255);
                 if (!isGradient) (*this)(xI, yI) = color;
                 else {
                     double p = xI / (this->get_width() - 1.0);
                     (*this)(xI, yI).red =
-                            (1 - p) * color.red + p * colorGr.red + 0.5;
+                            (1 - p) * color.red + p * colorGr.get_red_value() + 0.5;
                     (*this)(xI, yI).green =
-                            (1 - p) * color.green + p * colorGr.green + 0.5;
+                            (1 - p) * color.green + p * colorGr.get_green_value() + 0.5;
                     (*this)(xI, yI).blue =
-                            (1 - p) * color.blue + p * colorGr.blue + 0.5;
+                            (1 - p) * color.blue + p * colorGr.get_blue_value() + 0.5;
                 }
             }
         }

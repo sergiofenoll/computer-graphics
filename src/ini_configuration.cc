@@ -333,6 +333,10 @@ namespace ini
                                                                const std::string &entry_name,
                                                                DoubleTuple       &ret_val) const = 0;
 
+                        virtual bool as_fig_color_if_exists(const std::string &section_name,
+                                                               const std::string &entry_name,
+                                                               fig::Color       &ret_val) const = 0;
+
                         virtual void print(std::ostream &output_stream) const = 0;
         };
 
@@ -380,6 +384,9 @@ namespace ini
                                 virtual bool as_double_tuple_if_exists(const std::string &section_name,
                                                                        const std::string &entry_name,
                                                                        DoubleTuple       &ret_val) const;
+                                virtual bool as_fig_color_if_exists(const std::string &section_name,
+                                                                    const std::string &entry_name,
+                                                                    fig::Color        &ret_val) const;
                 };
 
                 ValueBase::ValueBase()
@@ -439,7 +446,12 @@ namespace ini
                         throw IncompatibleConversion(section_name, entry_name, "double tuple");
                 }
 
-
+                bool ValueBase::as_fig_color_if_exists(const std::string &section_name,
+                                                       const std::string &entry_name,
+                                                       fig::Color        &/*ret_val*/) const
+                {
+                        throw IncompatibleConversion(section_name, entry_name, "fig color");
+                }
 
                 class IntValue: public ValueBase
                 {
@@ -656,6 +668,9 @@ namespace ini
                                 virtual bool as_double_tuple_if_exists(const std::string &section_name,
                                                                        const std::string &entry_name,
                                                                        DoubleTuple       &ret_val) const;
+                                virtual bool as_fig_color_if_exists(const std::string &section_name,
+                                                                    const std::string &entry_name,
+                                                                    fig::Color       &ret_val) const;
 
                                 virtual void print(std::ostream &output_stream) const;
                 };
@@ -719,6 +734,28 @@ namespace ini
                         return true;
                 }
 
+                bool TupleValue::as_fig_color_if_exists(const std::string &section_name,
+                                                        const std::string &entry_name,
+                                                        fig::Color        &ret_val) const
+                {
+                        const ConstElementIter first_element = elements.begin();
+                        const ConstElementIter last_element  = elements.end();
+
+                        DoubleTuple placeholder;
+
+                        for(ConstElementIter i = first_element; i != last_element; ++i)
+                        {
+                                double element_value;
+                                const bool exists = (*i)->as_double_if_exists(section_name, entry_name, element_value);
+                                assert(exists);
+                                placeholder.push_back(element_value);
+                        }
+
+                        ret_val = placeholder;
+
+                        return true;
+                }
+
                 void TupleValue::print(std::ostream &output_stream) const
                 {
                         output_stream << "(";
@@ -768,6 +805,9 @@ namespace ini
                                 virtual bool as_double_tuple_if_exists(const std::string &section_name,
                                                                        const std::string &entry_name,
                                                                        DoubleTuple       &ret_val) const;
+                                virtual bool as_fig_color_if_exists(const std::string &section_name,
+                                                                    const std::string &entry_name,
+                                                                    fig::Color        &ret_val) const;
 
                                 virtual void print(std::ostream &output_stream) const;
                 };
@@ -825,6 +865,13 @@ namespace ini
                 bool EmptyValue::as_double_tuple_if_exists(const std::string &/*section_name*/,
                                                            const std::string &/*entry_name*/,
                                                            DoubleTuple       &/*ret_val*/) const
+                {
+                        return false;
+                }
+
+                bool EmptyValue::as_fig_color_if_exists(const std::string &/*section_name*/,
+                                                        const std::string &/*entry_name*/,
+                                                        fig::Color        &/*ret_val*/) const
                 {
                         return false;
                 }
@@ -1250,6 +1297,11 @@ namespace ini
                 return value_ptr->as_double_tuple_if_exists(section_name, entry_name, ret_val);
         }
 
+        bool Entry::as_fig_color_if_exists(fig::Color& ret_val) const
+        {
+                return value_ptr->as_fig_color_if_exists(section_name, entry_name, ret_val);
+        }
+
         int Entry::as_int_or_die() const
         {
                 int value;
@@ -1315,6 +1367,18 @@ namespace ini
                 DoubleTuple value;
 
                 if(as_double_tuple_if_exists(value))
+                {
+                        return value;
+                }
+
+                throw NonexistentEntry(section_name, entry_name);
+        }
+
+        fig::Color Entry::as_fig_color_or_die() const
+        {
+                fig::Color value;
+
+                if(as_fig_color_if_exists(value))
                 {
                         return value;
                 }
@@ -1392,6 +1456,18 @@ namespace ini
                 }
 
                 return def_val;
+        }
+
+        fig::Color Entry::as_fig_color_or_default(const fig::Color &def_val) const
+        {
+            fig::Color value;
+
+            if(as_fig_color_if_exists(value))
+            {
+                return value;
+            }
+
+            return def_val;
         }
 
         Entry::operator int() const

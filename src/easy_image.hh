@@ -23,6 +23,7 @@
 #include <limits>
 #include <algorithm>
 #include "vector.hh"
+#include "figures.hh"
 
 const double inf = std::numeric_limits<double>::infinity();
 
@@ -40,6 +41,21 @@ public:
 		return z_buf[x][y];
 	}
 };
+
+class Light {
+public:
+    std::vector<double> ambientLight;
+    std::vector<double> diffuseLight;
+    std::vector<double> specularLight;
+    Vector3D lightDirection;
+    Vector3D location;
+    bool isAmbient;
+    bool isDiffuseInf;
+    bool isDiffusePnt;
+    bool isSpecular;
+};
+
+typedef std::vector<Light> Lights;
 
 /**
  * \brief The namespace of the EasyImage class
@@ -262,7 +278,8 @@ namespace img
                     ZBuffer& z_buffer, unsigned int& x0, unsigned int& y0, double& z0, unsigned int& x1, unsigned int& y1, double& z1, Color color = Color(255, 255, 255), Color colorGr = Color(), bool isGradient = false);
 
             void draw_zbuf_triang(
-                    ZBuffer& z_buffer, Vector3D& A, Vector3D& B, Vector3D& C, const double& d, const double& dx, const double& dy, Color color = Color(255, 255, 255), Color colorGr = Color(), bool isGradient = false);
+                    ZBuffer& z_buffer, Vector3D& A, Vector3D& B, Vector3D& C, const double& d, const double& dx, const double& dy, fig::Color& ambientReflection,
+                    fig::Color& diffuseReflection, fig::Color& specularReflection, double& reflectionCoeff, Lights& lights, fig::Color colorGr, bool isGradient = false);
 
 		private:
 			friend std::istream& operator>>(std::istream& in, EasyImage & image);

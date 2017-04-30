@@ -20,6 +20,7 @@
 #define VECTOR_INCLUDED
 
 #include <iostream>
+#include <vector>
 
 #define NR_DIMS 3
 
@@ -366,6 +367,10 @@ class Vector3D
                  */
                 Vector3D &operator*=(const Matrix &rhs);
 
+                friend bool operator==(const Vector3D& lhs, const Vector3D& rhs) {
+                    return (lhs.x == rhs.x) and (lhs.y == rhs.y) and (lhs.z == rhs.z);
+                }
+
                 /**
                  * \brief Calculates the dot-product of this vector and another one.
                  *
@@ -457,6 +462,8 @@ class Vector3D
                  */
                 static Vector3D normalise(Vector3D arg);
 };
+
+typedef std::vector<Vector3D> Vectors3D;
 
 /**
  * \brief Returns the passed parameter unchanged.

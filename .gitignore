@@ -5,3 +5,5 @@ engine
 ext_in/
 .generate_all.sh.bak
 *.bmp
+.kdev4
+CompGraphX.kdev4

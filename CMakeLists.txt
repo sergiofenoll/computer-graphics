@@ -14,12 +14,10 @@ set(SOURCE_FILES
         src/ini_configuration.hh
         src/l_parser.cc
         src/l_parser.hh
-        src/Line2D.cc
-        src/Line2D.hh
-        src/3DFigures.cc
-        src/3DFigures.hh
+        src/figures.cc
+        src/figures.hh
         src/vector.cc
-        src/vector.hh)
+        src/vector.hh src/draw.cc src/draw.hh)
 # Single executable
 add_executable(engine ${SOURCE_FILES})
 # Create tgz archive

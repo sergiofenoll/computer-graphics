@@ -24,8 +24,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-
-
+#include "figures.hh"
 
 /**
  * \brief The namespace of the INI configuration file parser.
@@ -571,6 +570,9 @@ namespace ini
                          */
                         bool as_double_tuple_if_exists(DoubleTuple &ret_val) const;
 
+                        // TODO: Add proper documentation
+                        bool as_fig_color_if_exists(fig::Color& ret_val) const;
+
                         /**
                          * \brief Returns the value as an int.
                          *
@@ -640,6 +642,9 @@ namespace ini
                          * \return The value as a double tuple.
                          */
                         DoubleTuple as_double_tuple_or_die() const;
+
+                        // TODO: Add proper documentation
+                        fig::Color as_fig_color_or_die() const;
 
                         /**
                          * \brief Returns the value as an int.
@@ -722,6 +727,9 @@ namespace ini
                          * \return The value as a double tuple or the default value if the value does not exist.
                          */
                         DoubleTuple as_double_tuple_or_default(const DoubleTuple &def_val) const;
+
+                        // TODO: Add proper documentation
+                        fig::Color as_fig_color_or_default(const fig::Color& def_val) const;
 
                         /**
                          * \brief An alias for as_int_or_die.
