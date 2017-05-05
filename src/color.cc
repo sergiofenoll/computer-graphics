@@ -115,6 +115,18 @@ namespace col {
         return (uint8_t) ((*this).blue * 255);
     }
 
+    ZBuffer::ZBuffer() {}
+
+    ZBuffer::ZBuffer(const unsigned int& width, const unsigned int& height) {
+        std::vector<double> h(height, inf);
+        std::vector<std::vector<double>> w(width, h);
+        z_buf = w;
+    }
+
+    double& ZBuffer::operator()(unsigned int x, unsigned int y) {
+        return z_buf[x][y];
+    }
+
     Light::Light() {
         (*this).ambient_light = Color(0, 0, 0);
         (*this).diffuse_light = Color(0, 0, 0);

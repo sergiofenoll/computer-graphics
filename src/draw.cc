@@ -6,18 +6,6 @@
 
 namespace drw {
 
-    ZBuffer::ZBuffer() {}
-
-    ZBuffer::ZBuffer(const unsigned int& width, const unsigned int& height) {
-        std::vector<double> h(height, inf);
-        std::vector<std::vector<double>> w(width, h);
-        z_buf = w;
-    }
-
-    double& ZBuffer::operator()(unsigned int x, unsigned int y) {
-        return z_buf[x][y];
-    }
-
     img::EasyImage draw(
             fig::Figures& figures, DrawType& type, col::Lights& lights,
             const unsigned int& size, col::Color& bc) {
@@ -45,7 +33,7 @@ namespace drw {
         img::EasyImage image((unsigned int) std::round(imageX),
                              (unsigned int) std::round(imageY),
                              img::Color(bc.red_int_value(), bc.green_int_value(), bc.blue_int_value()));
-        ZBuffer* z_buffer;
+        col::ZBuffer* z_buffer;
         switch (type) {
             case Wires :
                 for(prj::Line &l : lines){
@@ -67,7 +55,7 @@ namespace drw {
                 }
                 break;
             case ZBuff :
-                z_buffer = new ZBuffer((unsigned int) std::round(imageX), (unsigned int) std::round(imageY));
+                z_buffer = new col::ZBuffer((unsigned int) std::round(imageX), (unsigned int) std::round(imageY));
                 for (prj::Line &l : lines) {
                     // Update the coordinates
                     l.p1.x *= d;
@@ -88,7 +76,7 @@ namespace drw {
                 delete z_buffer;
                 break;
             case Trian :
-                z_buffer = new ZBuffer((unsigned int) std::round(imageX), (unsigned int) std::round(imageY));
+                z_buffer = new col::ZBuffer((unsigned int) std::round(imageX), (unsigned int) std::round(imageY));
                 // Draw images
                 for (auto& figure : figures) {
                     figure->triangulate();
@@ -205,7 +193,7 @@ namespace drw {
     }
 
     void draw_zbuf_lines(
-            img::EasyImage& image, ZBuffer& z_buffer,
+            img::EasyImage& image, col::ZBuffer& z_buffer,
             unsigned int& x0, unsigned int& y0, double& z0,
             unsigned int& x1, unsigned int& y1, double& z1,
             col::Color color) {
@@ -298,7 +286,7 @@ namespace drw {
     }
 
     void draw_zbuf_triangles(
-            img::EasyImage& image, ZBuffer& z_buffer,
+            img::EasyImage& image, col::ZBuffer& z_buffer,
             Vector3D& A, Vector3D& B, Vector3D& C,
             const double& d, const double& dx, const double& dy,
             col::Color ambientReflection,

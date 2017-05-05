@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <assert.h>
+#include "easy_image.hh"
 #include "vector.hh"
 
 namespace col {
@@ -115,6 +116,15 @@ namespace col {
         uint8_t blue_int_value() const;
     };
 
+    class ZBuffer {
+    private:
+        std::vector<std::vector<double>> z_buf;
+    public:
+        ZBuffer();
+        ZBuffer(const unsigned int& width, const unsigned int& height);
+        double& operator()(unsigned int x, unsigned int y);
+    };
+
     class Light {
     private:
         Color ambient_light;
@@ -162,10 +172,18 @@ namespace col {
     class PntLight : public Light {
     private:
         Vector3D location_vector;
+
+        ZBuffer shadow_mask;
+
+        Matrix eye;
+
+        double d, dx, dy;
     public:
         virtual void set_location(Vector3D& location);
 
         virtual Vector3D get_location();
+
+        
 
         virtual bool is_diffuse_inf();
 

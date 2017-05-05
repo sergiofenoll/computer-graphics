@@ -7,18 +7,11 @@
 
 
 #include "easy_image.hh"
+#include "color.hh"
 #include "figures.hh"
 #include "projection.hh"
 
 namespace drw {
-    class ZBuffer {
-    private:
-        std::vector<std::vector<double>> z_buf;
-    public:
-        ZBuffer();
-        ZBuffer(const unsigned int& width, const unsigned int& height);
-        double& operator()(unsigned int x, unsigned int y);
-    };
 
     enum DrawType {
         Wires,
@@ -39,13 +32,13 @@ namespace drw {
             col::Color color);
 
     void draw_zbuf_lines(
-            img::EasyImage& image, ZBuffer& z_buffer,
+            img::EasyImage& image, col::ZBuffer& z_buffer,
             unsigned int& x0, unsigned int& y0, double& z0,
             unsigned int& x1, unsigned int& y1, double& z1,
             col::Color color);
 
     void draw_zbuf_triangles(
-            img::EasyImage& image, ZBuffer& z_buffer,
+            img::EasyImage& image, col::ZBuffer& z_buffer,
             Vector3D& A, Vector3D& B, Vector3D& C,
             const double& d, const double& dx, const double& dy,
             col::Color ambientReflection,
