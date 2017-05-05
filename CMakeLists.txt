@@ -17,7 +17,7 @@ set(SOURCE_FILES
         src/figures.cc
         src/figures.hh
         src/vector.cc
-        src/vector.hh src/draw.cc src/draw.hh)
+        src/vector.hh src/draw.cc src/draw.hh src/projection.cc src/projection.hh src/color.cc src/color.hh)
 # Single executable
 add_executable(engine ${SOURCE_FILES})
 # Create tgz archive

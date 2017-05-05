@@ -335,7 +335,7 @@ namespace ini
 
                         virtual bool as_fig_color_if_exists(const std::string &section_name,
                                                                const std::string &entry_name,
-                                                               fig::Color       &ret_val) const = 0;
+                                                               col::Color       &ret_val) const = 0;
 
                         virtual void print(std::ostream &output_stream) const = 0;
         };
@@ -386,7 +386,7 @@ namespace ini
                                                                        DoubleTuple       &ret_val) const;
                                 virtual bool as_fig_color_if_exists(const std::string &section_name,
                                                                     const std::string &entry_name,
-                                                                    fig::Color        &ret_val) const;
+                                                                    col::Color        &ret_val) const;
                 };
 
                 ValueBase::ValueBase()
@@ -448,7 +448,7 @@ namespace ini
 
                 bool ValueBase::as_fig_color_if_exists(const std::string &section_name,
                                                        const std::string &entry_name,
-                                                       fig::Color        &/*ret_val*/) const
+                                                       col::Color        &/*ret_val*/) const
                 {
                         throw IncompatibleConversion(section_name, entry_name, "fig color");
                 }
@@ -670,7 +670,7 @@ namespace ini
                                                                        DoubleTuple       &ret_val) const;
                                 virtual bool as_fig_color_if_exists(const std::string &section_name,
                                                                     const std::string &entry_name,
-                                                                    fig::Color       &ret_val) const;
+                                                                    col::Color       &ret_val) const;
 
                                 virtual void print(std::ostream &output_stream) const;
                 };
@@ -736,7 +736,7 @@ namespace ini
 
                 bool TupleValue::as_fig_color_if_exists(const std::string &section_name,
                                                         const std::string &entry_name,
-                                                        fig::Color        &ret_val) const
+                                                        col::Color        &ret_val) const
                 {
                         const ConstElementIter first_element = elements.begin();
                         const ConstElementIter last_element  = elements.end();
@@ -807,7 +807,7 @@ namespace ini
                                                                        DoubleTuple       &ret_val) const;
                                 virtual bool as_fig_color_if_exists(const std::string &section_name,
                                                                     const std::string &entry_name,
-                                                                    fig::Color        &ret_val) const;
+                                                                    col::Color        &ret_val) const;
 
                                 virtual void print(std::ostream &output_stream) const;
                 };
@@ -871,7 +871,7 @@ namespace ini
 
                 bool EmptyValue::as_fig_color_if_exists(const std::string &/*section_name*/,
                                                         const std::string &/*entry_name*/,
-                                                        fig::Color        &/*ret_val*/) const
+                                                        col::Color        &/*ret_val*/) const
                 {
                         return false;
                 }
@@ -1297,7 +1297,7 @@ namespace ini
                 return value_ptr->as_double_tuple_if_exists(section_name, entry_name, ret_val);
         }
 
-        bool Entry::as_fig_color_if_exists(fig::Color& ret_val) const
+        bool Entry::as_fig_color_if_exists(col::Color& ret_val) const
         {
                 return value_ptr->as_fig_color_if_exists(section_name, entry_name, ret_val);
         }
@@ -1374,9 +1374,9 @@ namespace ini
                 throw NonexistentEntry(section_name, entry_name);
         }
 
-        fig::Color Entry::as_fig_color_or_die() const
+        col::Color Entry::as_fig_color_or_die() const
         {
-                fig::Color value;
+                col::Color value;
 
                 if(as_fig_color_if_exists(value))
                 {
@@ -1458,9 +1458,9 @@ namespace ini
                 return def_val;
         }
 
-        fig::Color Entry::as_fig_color_or_default(const fig::Color &def_val) const
+        col::Color Entry::as_fig_color_or_default(const col::Color &def_val) const
         {
-            fig::Color value;
+            col::Color value;
 
             if(as_fig_color_if_exists(value))
             {

@@ -8,19 +8,50 @@
 
 #include "easy_image.hh"
 #include "figures.hh"
+#include "projection.hh"
 
-namespace draw {
-    enum FigureType {
+namespace drw {
+    class ZBuffer {
+    private:
+        std::vector<std::vector<double>> z_buf;
+    public:
+        ZBuffer();
+        ZBuffer(const unsigned int& width, const unsigned int& height);
+        double& operator()(unsigned int x, unsigned int y);
+    };
+
+    enum DrawType {
         Wires,
         ZBuff,
         Trian,
     };
 
-    img::EasyImage draw2DLines(
-            fig::Lines2D& lines, const unsigned int& size, const fig::Color& bc, const fig::Color& bcGr, bool isGrB=false);
+    img::EasyImage draw(
+            fig::Figures& figures, DrawType& type, col::Lights& lights,
+            const unsigned int& size, col::Color& bc);
 
-    img::EasyImage draw_lines(
-            fig::Figures3D& figures, FigureType& type, const unsigned int& size, Lights& lights, const fig::Color& bc, const fig::Color& bcGr, bool isGrB=false);
+    img::EasyImage draw(prj::Lines& lines, const unsigned int& size, col::Color& bc);
+
+    void draw_lines(
+            img::EasyImage& image,
+            unsigned int& x0, unsigned int& y0,
+            unsigned int& x1, unsigned int& y1,
+            col::Color color);
+
+    void draw_zbuf_lines(
+            img::EasyImage& image, ZBuffer& z_buffer,
+            unsigned int& x0, unsigned int& y0, double& z0,
+            unsigned int& x1, unsigned int& y1, double& z1,
+            col::Color color);
+
+    void draw_zbuf_triangles(
+            img::EasyImage& image, ZBuffer& z_buffer,
+            Vector3D& A, Vector3D& B, Vector3D& C,
+            const double& d, const double& dx, const double& dy,
+            col::Color ambientReflection,
+            col::Color diffuseReflection,
+            col::Color specularReflection,
+            double reflectionCoeff, col::Lights& lights);
 };
 
 

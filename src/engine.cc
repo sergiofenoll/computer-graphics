@@ -9,6 +9,7 @@
 #include "vector.hh"
 #include "l_parser.hh"
 #include "figures.hh"
+#include "draw.hh"
 
 img::EasyImage IntroColorRectangle(const ini::Configuration& configuration){
     const ini::Section imgProp = configuration["ImageProperties"];
@@ -143,19 +144,21 @@ img::EasyImage IntroLines(const ini::Configuration& configuration){
 img::EasyImage LSystem(const ini::Configuration& configuration){
     ini::Section general = configuration["General"];
     std::string type = general["type"].as_string_or_die();
-    const int size = general["size"].as_int_or_die();
+    const unsigned int size = (const unsigned int) general["size"].as_int_or_die();
 
-    const std::vector<double> bcVector = general["backgroundcolor"].as_double_tuple_or_die();
-    img::Color bc(bcVector[0]*255, bcVector[1]*255, bcVector[2]*255);
-    std::vector<double> bcVectorGr = {0, 0, 0};
-    bool isGrB = general["gradient"].as_double_tuple_if_exists(bcVectorGr);
-    img::Color bcGr(bcVectorGr[0]*255, bcVectorGr[1]*255, bcVectorGr[2]*255);
+    col::Color bc = general["backgroundcolor"].as_fig_color_or_die();
+    // const std::vector<double> bcVector = general["backgroundcolor"].as_double_tuple_or_die();
+    // img::Color bc(bcVector[0]*255, bcVector[1]*255, bcVector[2]*255);
+    // std::vector<double> bcVectorGr = {0, 0, 0};
+    // bool isGrB = general["gradient"].as_double_tuple_if_exists(bcVectorGr);
+    // img::Color bcGr(bcVectorGr[0]*255, bcVectorGr[1]*255, bcVectorGr[2]*255);
 
-    const std::vector<double> lcVector = configuration["2DLSystem"]["color"].as_double_tuple_or_die();
-    img::Color lc(lcVector[0]*255, lcVector[1]*255, lcVector[2]*255);
-    std::vector<double> lcVectorGr = {0, 0, 0};
-    bool isGrL = configuration["2DLSystem"]["gradient"].as_double_tuple_if_exists(lcVectorGr);
-    img::Color lcGr(lcVectorGr[0]*255, lcVectorGr[1]*255, lcVectorGr[2]*255);
+    col::Color lc = configuration["2DLSystem"]["color"].as_fig_color_or_die();
+    // const std::vector<double> lcVector = configuration["2DLSystem"]["color"].as_double_tuple_or_die();
+    // img::Color lc(lcVector[0]*255, lcVector[1]*255, lcVector[2]*255);
+    // std::vector<double> lcVectorGr = {0, 0, 0};
+    // bool isGrL = configuration["2DLSystem"]["gradient"].as_double_tuple_if_exists(lcVectorGr);
+    // img::Color lcGr(lcVectorGr[0]*255, lcVectorGr[1]*255, lcVectorGr[2]*255);
 
     std::string inf = configuration["2DLSystem"]["inputfile"];
     // Create 2D L-system
@@ -171,42 +174,41 @@ img::EasyImage LSystem(const ini::Configuration& configuration){
     double alph_angle = (l_system.get_starting_angle() / 360.0) * 2*PI;
     double delt_angle = (l_system.get_angle() / 360.0) * 2*PI;
 
-    Lines2D lines;
+    prj::Lines lines;
     std::stack<double> brStack;
     unsigned int cur_it = 0;
     double x = 0;
     double y = 0;
-    recursivePrintString(l_system, init, cur_it, max_it,
-                         alph_angle, delt_angle, lines, brStack,
-                         lc, lcGr, isGrL, x, y);
-    img::EasyImage image = draw2DLines(lines, size, bc, bcGr, isGrB);
+    prj::recursivePrintString(l_system, init, cur_it, max_it, alph_angle, delt_angle, lines, brStack, lc, x, y);
+    img::EasyImage image = drw::draw(lines, size, bc);
     return image;
 };
 
 img::EasyImage Wireframe(const ini::Configuration& configuration){
     ini::Section general = configuration["General"];
-    FigureType fig_type = Wires;
+    drw::DrawType fig_type = drw::Wires;
 
     // ##### ZBuffered Wireframe #####
-    if (general["type"].as_string_or_die() == "ZBufferedWireframe") fig_type = ZBuff;
+    if (general["type"].as_string_or_die() == "ZBufferedWireframe") fig_type = drw::ZBuff;
 
     // ##### ZBuffering with triangles #####
-    if (general["type"].as_string_or_die() == "ZBuffering") fig_type = Trian;
+    if (general["type"].as_string_or_die() == "ZBuffering") fig_type = drw::Trian;
 
     // ##### Lighted ZBuffering #####
-    if (general["type"].as_string_or_die() == "LightedZBuffering") fig_type = Trian;
+    if (general["type"].as_string_or_die() == "LightedZBuffering") fig_type = drw::Trian;
 
     // ##### Image size #####
     const unsigned int size = (const unsigned int) general["size"].as_double_or_die();
 
     // ##### Background colour #####
-    const std::vector<double> bcVector = general["backgroundcolor"].as_double_tuple_or_die();
-    img::Color bc((uint8_t) (bcVector[0] * 255), (uint8_t) (bcVector[1] * 255), (uint8_t) (bcVector[2] * 255));
+    col::Color bc = general["backgroundcolor"].as_fig_color_or_die();
+    // const std::vector<double> bcVector = general["backgroundcolor"].as_double_tuple_or_die();
+    // img::Color bc((uint8_t) (bcVector[0] * 255), (uint8_t) (bcVector[1] * 255), (uint8_t) (bcVector[2] * 255));
 
     // ##### Background gradient #####
-    std::vector<double> bcVectorGr = {0, 0, 0};
-    bool isGrB = general["gradient"].as_double_tuple_if_exists(bcVectorGr);
-    img::Color bcGr((uint8_t) (bcVectorGr[0]*255), (uint8_t) (bcVectorGr[1]*255), (uint8_t) (bcVectorGr[2]*255));
+    // std::vector<double> bcVectorGr = {0, 0, 0};
+    // bool isGrB = general["gradient"].as_double_tuple_if_exists(bcVectorGr);
+    // img::Color bcGr((uint8_t) (bcVectorGr[0]*255), (uint8_t) (bcVectorGr[1]*255), (uint8_t) (bcVectorGr[2]*255));
 
     const unsigned int nrFig = (const unsigned int) general["nrFigures"].as_int_or_die();
 
@@ -215,45 +217,57 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
 
     // ##### Lights #####
     int nrLights = 0; general["nrLights"].as_int_if_exists(nrLights);
-    Lights lights;
+    col::Lights lights;
     for (unsigned int i = 0; i < nrLights; i++) {
         ini::Section light = configuration["Light" + std::to_string(i)];
         bool infinity;
         bool isDiffuse = light["infinity"].as_bool_if_exists(infinity);
-        Light l;
+        col::Light* l;
         if (isDiffuse) {
             if (infinity) {
+                l = new col::InfLight();
                 std::vector<double> dir; light["direction"].as_double_tuple_if_exists(dir);
                 Vector3D direction = Vector3D::vector(dir[0], dir[1], dir[2]);
-                l.isAmbient = light["ambientLight"].as_double_tuple_if_exists(l.ambientLight);
-                l.isDiffuseInf = light["diffuseLight"].as_double_tuple_if_exists(l.diffuseLight);
-                l.isSpecular = light["specularLight"].as_double_tuple_if_exists(l.specularLight);
-                l.isDiffusePnt = false;
-                l.lightDirection = direction;
+                light["ambientLight"].as_fig_color_if_exists(l->ambient());
+                light["diffuseLight"].as_fig_color_if_exists(l->diffuse());
+                light["specularLight"].as_fig_color_if_exists(l->specular());
+                l->set_direction(direction);
+//                l.isAmbient = light["ambientLight"].as_fig_color_if_exists(l.ambientLight);
+//                l.isDiffuseInf = light["diffuseLight"].as_fig_color_if_exists(l.diffuseLight);
+//                l.isSpecular = light["specularLight"].as_fig_color_if_exists(l.specularLight);
+//                l.isDiffusePnt = false;
+//                l.lightDirection = direction;
                 lights.push_back(l);
             }
             else {
+                l = new col::PntLight();
                 std::vector<double> loc; light["location"].as_double_tuple_if_exists(loc);
                 Vector3D location = Vector3D::point(loc[0], loc[1], loc[2]);
-                l.isAmbient = light["ambientLight"].as_double_tuple_if_exists(l.ambientLight);
-                l.isDiffusePnt = light["diffuseLight"].as_double_tuple_if_exists(l.diffuseLight);
-                l.isSpecular = light["specularLight"].as_double_tuple_if_exists(l.specularLight);
-                l.isDiffuseInf = false;
-                l.location = location;
+                light["ambientLight"].as_fig_color_if_exists(l->ambient());
+                light["diffuseLight"].as_fig_color_if_exists(l->diffuse());
+                light["specularLight"].as_fig_color_if_exists(l->specular());
+                l->set_location(location);
+//                l.isAmbient = light["ambientLight"].as_fig_color_if_exists(l.ambientLight);
+//                l.isDiffusePnt = light["diffuseLight"].as_fig_color_if_exists(l.diffuseLight);
+//                l.isSpecular = light["specularLight"].as_fig_color_if_exists(l.specularLight);
+//                l.isDiffuseInf = false;
+//                l.location = location;
                 lights.push_back(l);
             }
         }
         else {
-            l.isAmbient = light["ambientLight"].as_double_tuple_if_exists(l.ambientLight);
-            l.isDiffuseInf = false;
-            l.isDiffusePnt = false;
-            // light["diffuseLight"].as_double_tuple_if_exists(l.diffuseLight);
-            l.isSpecular = light["specularLight"].as_double_tuple_if_exists(l.specularLight);
+            l = new col::Light();
+            light["ambientLight"].as_fig_color_if_exists(l->ambient());
+            light["specularLight"].as_fig_color_if_exists(l->specular());
+//            l.isAmbient = light["ambientLight"].as_fig_color_if_exists(l.ambientLight);
+//            l.isDiffuseInf = false;
+//            l.isDiffusePnt = false;
+//            l.isSpecular = light["specularLight"].as_fig_color_if_exists(l.specularLight);
             lights.push_back(l);
         }
     }
 
-    Figures3D figures;
+    fig::Figures figures;
     for (unsigned int i = 0; i < nrFig; i++) {
         ini::Section figure = configuration["Figure" + std::to_string(i)];
         std::string type = figure["type"].as_string_or_die();
@@ -269,15 +283,15 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
         Vector3D center = Vector3D::vector(cen[0], cen[1], cen[2]);
 
         // ##### Figure colour #####
-        std::vector<double> color;
-        bool isCol = figure["color"].as_double_tuple_if_exists(color);
+        // std::vector<double> color;
+        // bool isCol = figure["color"].as_double_tuple_if_exists(color);
 
         // ##### Figure gradient #####
-        std::vector<double> colGr = {0, 0, 0};
-        bool isGr = figure["gradient"].as_double_tuple_if_exists(colGr);
-        img::Color colorGr((uint8_t) (colGr[0]*255), (uint8_t) (colGr[1]*255), (uint8_t) (colGr[2]*255));
+        // std::vector<double> colGr = {0, 0, 0};
+        // bool isGr = figure["gradient"].as_double_tuple_if_exists(colGr);
+        // img::Color colorGr((uint8_t) (colGr[0]*255), (uint8_t) (colGr[1]*255), (uint8_t) (colGr[2]*255));
 
-        Figure* fig;
+        fig::Figure* fig;
         bool isFract = false;
         double fractalScale;
         unsigned int max_iter;
@@ -285,47 +299,41 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
             // fig = createLineDrawing(configuration, i);
         }
         else if (type == "Cube"){
-            fig = new Cube();
+            fig = new fig::Cube();
         }
         else if (type=="Tetrahedron"){
-            fig = new Tetrahedron();
+            fig = new fig::Tetrahedron();
         }
         else if (type=="Octahedron"){
-            fig = new Octahedron();
+            fig = new fig::Octahedron();
         }
         else if (type=="Icosahedron"){
-            fig = new Icosahedron();
+            fig = new fig::Icosahedron();
         }
         else if (type=="Dodecahedron"){
-            fig = new Dodecahedron();
-        }
-        else if (type=="Icosahedron"){
-            fig = new Icosahedron();
-        }
-        else if (type=="Dodecahedron"){
-            fig = new Dodecahedron();
+            fig = new fig::Dodecahedron();
         }
         else if (type=="Cylinder"){
             double h = figure["height"].as_double_or_die();
             const unsigned int n = (const unsigned int) figure["n"].as_int_or_die();
-            fig = new Cylinder(h, n);
+            fig = new fig::Cylinder(h, n);
         }
         else if (type=="Cone"){
             double h = figure["height"].as_double_or_die();
             const unsigned int n = (const unsigned int) figure["n"].as_int_or_die();
-            fig = new Cone(h, n);
+            fig = new fig::Cone(h, n);
         }
         else if(type=="Sphere"){
             const unsigned int n = (const unsigned int) figure["n"].as_int_or_die();
             double radius;
-            fig = new Sphere(radius, n);
+            fig = new fig::Sphere(radius, n);
         }
         else if(type=="Torus"){
             double r = figure["r"].as_double_or_die();
             double R = figure["R"].as_double_or_die();
             const unsigned int m = (const unsigned int) figure["m"].as_int_or_die();
             const unsigned int n = (const unsigned int) figure["n"].as_int_or_die();
-            fig = new Torus(r, R, m, n);
+            fig = new fig::Torus(r, R, m, n);
         }
         else if(type=="SpecialSphere"){
             double r = figure["r"].as_double_or_die();
@@ -358,66 +366,65 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
             Vector3D L = Vector3D::vector(0, 1, 0);
             Vector3D U = Vector3D::vector(0, 0, 1);
 
-            recursivePrintString(l_system, init, cur_it, max_it,
-                                 delt_angle, (*fig),
-                                 doubleStack, vectorStack,
-                                 x, y, z, H, L, U);
+            fig = new fig::Figure();
+
+            prj::recursivePrintString(
+                    l_system, init, cur_it, max_it, delt_angle, (*fig), doubleStack, vectorStack, x, y, z, H, L, U);
         }
         else if (type == "FractalCube") {
             fractalScale = figure["fractalScale"].as_double_or_die();
             max_iter = (unsigned int) figure["nrIterations"].as_int_or_die();
-            fig = new Cube();
+            fig = new fig::Cube();
             isFract = true;
         }
         else if (type == "FractalDodecahedron") { 
             fractalScale = figure["fractalScale"].as_double_or_die();
             max_iter = (unsigned int) figure["nrIterations"].as_int_or_die();
-            fig = new Dodecahedron();
+            fig = new fig::Dodecahedron();
             isFract = true;
         }
         else if (type == "FractalIcosahedron") {
             fractalScale = figure["fractalScale"].as_double_or_die();
             max_iter = (unsigned int) figure["nrIterations"].as_int_or_die();
-            fig = new Icosahedron();
+            fig = new fig::Icosahedron();
             isFract = true;
         }
         else if (type == "FractalOctahedron") {
             fractalScale = figure["fractalScale"].as_double_or_die();
             max_iter = (unsigned int) figure["nrIterations"].as_int_or_die();
-            fig = new Octahedron();
+            fig = new fig::Octahedron();
             isFract = true;
         }
         else if (type == "FractalTetrahedron") {
             fractalScale = figure["fractalScale"].as_double_or_die();
             max_iter = (unsigned int) figure["nrIterations"].as_int_or_die();
-            fig = new Tetrahedron();
+            fig = new fig::Tetrahedron();
             isFract = true;
         }
         else if (type == "BuckyBall") {
-            fig = new Buckyball();
+            fig = new fig::Buckyball();
         }
         else if (type == "FractalBuckyBall") {
             fractalScale = figure["fractalScale"].as_double_or_die();
             max_iter = (unsigned int) figure["nrIterations"].as_int_or_die();
-            fig = new Buckyball();
+            fig = new fig::Buckyball();
             isFract = true;
         }
         else if (type == "MengerSponge") {
             max_iter = (unsigned int) figure["nrIterations"].as_int_or_die();
-            fig = new Cube();
+            fig = new fig::Cube();
             // fig.generateMengerSponge(fig, max_iter);
         }
         else {
             std::cerr << "ERROR: Unknown figure.\n";
+            fig = new fig::Figure();
         }
 
         figure["color"].as_fig_color_if_exists(fig->ambient_reflection);
-        figure["ambient_reflection"].as_fig_color_if_exists(fig->ambient_reflection);
+        figure["ambientReflection"].as_fig_color_if_exists(fig->ambient_reflection);
         figure["diffuseReflection"].as_fig_color_if_exists(fig->diffuse_reflection);
         figure["specular_reflection"].as_fig_color_if_exists(fig->specular_reflection);
         figure["reflectionCoefficient"].as_double_if_exists(fig->reflection_coefficient);
-        // fig.colorGr = colorGr;
-        fig->isGradient = isGr;
         Matrix sclM = scaleFigure(scale);
         Matrix rotX = rotateX(rotXang);
         Matrix rotY = rotateY(rotYang);
@@ -427,20 +434,30 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
         Matrix V = sclM * rotX * rotY * rotZ * trsM  * eyeT;
         fig->apply_transformation(V);
         unsigned int cur_iter = 1;
-        if (isFract) recursiveGenerateFractal((*fig), figures, fractalScale, cur_iter, max_iter);
+        if (isFract) fig::generate_fractal((*fig), figures, fractalScale, cur_iter, max_iter);
         else figures.push_back(fig);
     }
     Matrix eyeT = eyePointTrans(eye);
     for (auto& light : lights) {
-        if (light.isDiffuseInf) {
-            light.lightDirection *= eyeT;
-            light.location *= eyeT;
+        if (light->is_diffuse_inf()) {
+            Vector3D direction = light->get_direction() * eyeT;
+            Vector3D location = light->get_location() * eyeT;
+            light->set_direction(direction);
+            light->set_location(location);
         }
-        else if (light.isDiffusePnt) {
-            light.location *= eyeT;
+        else if (light->is_diffuse_pnt()) {
+            Vector3D location = light->get_location() * eyeT;
+            light->set_location(location);
         }
     }
-    return draw3DLines(figures, fig_type, size, lights, bc, bcGr, isGrB);
+    img::EasyImage image = drw::draw(figures, fig_type, lights, size, bc);
+    for (auto fig : figures) {
+        delete fig;
+    }
+    for (auto light : lights) {
+        delete light;
+    }
+    return image;
 }
 
 img::EasyImage generate_image(const ini::Configuration& configuration){

@@ -291,14 +291,14 @@ namespace
 			if (alphabet.find(c) == alphabet.end())
 				throw LParser::ParserException("Draw function specified for char which is not part of the alphabet.", parser.getLine(), parser.getCol());
 			if (draw.find(c) != draw.end())
-				throw LParser::ParserException(std::string("Double entry '") + c + "' in draw specification", parser.getLine(), parser.getCol());
+				throw LParser::ParserException(std::string("Double entry '") + c + "' in drw specification", parser.getLine(), parser.getCol());
 			char alphabet_char = c;
 			parser.skip_comments_and_whitespace();
 			parser.assertChars("->");
 			parser.skip_comments_and_whitespace();
 			int value = parser.readInt();
 			if (value != 0 && value != 1)
-				throw LParser::ParserException(std::string("Invalid draw specification for entry '") + alphabet_char + "' in draw specification", parser.getLine(), parser.getCol());
+				throw LParser::ParserException(std::string("Invalid drw specification for entry '") + alphabet_char + "' in drw specification", parser.getLine(), parser.getCol());
 			draw[alphabet_char] = (bool) value;
 			parser.skip_comments_and_whitespace();
 			c = parser.getChar();
