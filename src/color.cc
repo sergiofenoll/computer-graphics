@@ -157,6 +157,28 @@ namespace col {
         return Vector3D();
     }
 
+    void Light::set_shadow_mask(ZBuffer& shadow_mask) {}
+
+    ZBuffer Light::get_shadow_mask() {
+        return ZBuffer();
+    }
+
+    void Light::set_shadow_mask_at(unsigned int x, unsigned int y, double val) {}
+
+    double Light::get_shadow_mask_at(unsigned int x, unsigned int y) { ;
+        return 0;
+    }
+
+    void Light::set_eye(Matrix& eye) {}
+
+    Matrix Light::get_eye() {
+        return Matrix();
+    }
+
+    void Light::set_values(double& d, double& dx, double& dy) {}
+
+    void Light::get_values(double& d, double& dx, double& dy) {}
+
     bool Light::is_ambient() {
         return !((*this).ambient_light == Color(0, 0, 0));
     }
@@ -195,6 +217,42 @@ namespace col {
 
     Vector3D PntLight::get_location() {
         return (*this).location_vector;
+    }
+
+    void PntLight::set_shadow_mask(ZBuffer& shadow_mask) {
+        (*this).shadow_mask = shadow_mask;
+    }
+
+    ZBuffer PntLight::get_shadow_mask() {
+        return shadow_mask;
+    }
+
+    void PntLight::set_shadow_mask_at(unsigned int x, unsigned int y, double val) {
+        shadow_mask(x, y) = val;
+    }
+
+    double PntLight::get_shadow_mask_at(unsigned int x, unsigned int y) {
+        return shadow_mask(x, y);
+    }
+
+    void PntLight::set_eye(Matrix& eye) {
+        (*this).eye = eye;
+    }
+
+    Matrix PntLight::get_eye() {
+        return eye;
+    }
+
+    void PntLight::set_values(double& d, double& dx, double& dy) {
+        (*this).d = d;
+        (*this).dx = dx;
+        (*this).dy = dy;
+    }
+
+    void PntLight::get_values(double& d, double& dx, double& dy) {
+        d = (*this).d;
+        dx = (*this).dx;
+        dy = (*this).dy;
     }
 
     bool PntLight::is_diffuse_inf() {

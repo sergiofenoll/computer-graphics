@@ -144,29 +144,26 @@ img::EasyImage IntroLines(const ini::Configuration& configuration){
 img::EasyImage LSystem(const ini::Configuration& configuration){
     ini::Section general = configuration["General"];
     std::string type = general["type"].as_string_or_die();
+
+    // ##### Image size #####
     const unsigned int size = (const unsigned int) general["size"].as_int_or_die();
 
+    // ##### Background colour #####
     col::Color bc = general["backgroundcolor"].as_fig_color_or_die();
-    // const std::vector<double> bcVector = general["backgroundcolor"].as_double_tuple_or_die();
-    // img::Color bc(bcVector[0]*255, bcVector[1]*255, bcVector[2]*255);
-    // std::vector<double> bcVectorGr = {0, 0, 0};
-    // bool isGrB = general["gradient"].as_double_tuple_if_exists(bcVectorGr);
-    // img::Color bcGr(bcVectorGr[0]*255, bcVectorGr[1]*255, bcVectorGr[2]*255);
 
+    // ##### Line colour #####
     col::Color lc = configuration["2DLSystem"]["color"].as_fig_color_or_die();
-    // const std::vector<double> lcVector = configuration["2DLSystem"]["color"].as_double_tuple_or_die();
-    // img::Color lc(lcVector[0]*255, lcVector[1]*255, lcVector[2]*255);
-    // std::vector<double> lcVectorGr = {0, 0, 0};
-    // bool isGrL = configuration["2DLSystem"]["gradient"].as_double_tuple_if_exists(lcVectorGr);
-    // img::Color lcGr(lcVectorGr[0]*255, lcVectorGr[1]*255, lcVectorGr[2]*255);
 
+    // ##### Input file #####
     std::string inf = configuration["2DLSystem"]["inputfile"];
+
     // Create 2D L-system
     LParser::LSystem2D l_system;
     std::ifstream input_stream(inf);
     if (type=="2DLSystemStoch") l_system.setStoch(true);
     input_stream >> l_system;
     input_stream.close();
+
     // Get values from 2D L-system
     std::set<char> alph = l_system.get_alphabet();
     std::string init = l_system.get_initiator();
@@ -202,13 +199,6 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
 
     // ##### Background colour #####
     col::Color bc = general["backgroundcolor"].as_fig_color_or_die();
-    // const std::vector<double> bcVector = general["backgroundcolor"].as_double_tuple_or_die();
-    // img::Color bc((uint8_t) (bcVector[0] * 255), (uint8_t) (bcVector[1] * 255), (uint8_t) (bcVector[2] * 255));
-
-    // ##### Background gradient #####
-    // std::vector<double> bcVectorGr = {0, 0, 0};
-    // bool isGrB = general["gradient"].as_double_tuple_if_exists(bcVectorGr);
-    // img::Color bcGr((uint8_t) (bcVectorGr[0]*255), (uint8_t) (bcVectorGr[1]*255), (uint8_t) (bcVectorGr[2]*255));
 
     const unsigned int nrFig = (const unsigned int) general["nrFigures"].as_int_or_die();
 
@@ -221,9 +211,9 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
     for (unsigned int i = 0; i < nrLights; i++) {
         ini::Section light = configuration["Light" + std::to_string(i)];
         bool infinity;
-        bool isDiffuse = light["infinity"].as_bool_if_exists(infinity);
+        bool is_diffuse = light["infinity"].as_bool_if_exists(infinity);
         col::Light* l;
-        if (isDiffuse) {
+        if (is_diffuse) {
             if (infinity) {
                 l = new col::InfLight();
                 std::vector<double> dir; light["direction"].as_double_tuple_if_exists(dir);
@@ -232,14 +222,10 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
                 light["diffuseLight"].as_fig_color_if_exists(l->diffuse());
                 light["specularLight"].as_fig_color_if_exists(l->specular());
                 l->set_direction(direction);
-//                l.isAmbient = light["ambientLight"].as_fig_color_if_exists(l.ambientLight);
-//                l.isDiffuseInf = light["diffuseLight"].as_fig_color_if_exists(l.diffuseLight);
-//                l.isSpecular = light["specularLight"].as_fig_color_if_exists(l.specularLight);
-//                l.isDiffusePnt = false;
-//                l.lightDirection = direction;
                 lights.push_back(l);
             }
             else {
+                bool is_shadow; general["shadowEnabled"].as_bool_if_exists(is_shadow);
                 l = new col::PntLight();
                 std::vector<double> loc; light["location"].as_double_tuple_if_exists(loc);
                 Vector3D location = Vector3D::point(loc[0], loc[1], loc[2]);
@@ -247,11 +233,6 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
                 light["diffuseLight"].as_fig_color_if_exists(l->diffuse());
                 light["specularLight"].as_fig_color_if_exists(l->specular());
                 l->set_location(location);
-//                l.isAmbient = light["ambientLight"].as_fig_color_if_exists(l.ambientLight);
-//                l.isDiffusePnt = light["diffuseLight"].as_fig_color_if_exists(l.diffuseLight);
-//                l.isSpecular = light["specularLight"].as_fig_color_if_exists(l.specularLight);
-//                l.isDiffuseInf = false;
-//                l.location = location;
                 lights.push_back(l);
             }
         }
@@ -259,10 +240,6 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
             l = new col::Light();
             light["ambientLight"].as_fig_color_if_exists(l->ambient());
             light["specularLight"].as_fig_color_if_exists(l->specular());
-//            l.isAmbient = light["ambientLight"].as_fig_color_if_exists(l.ambientLight);
-//            l.isDiffuseInf = false;
-//            l.isDiffusePnt = false;
-//            l.isSpecular = light["specularLight"].as_fig_color_if_exists(l.specularLight);
             lights.push_back(l);
         }
     }
@@ -281,15 +258,6 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
         // ##### Figure center #####
         std::vector<double> cen = figure["center"].as_double_tuple_or_die();
         Vector3D center = Vector3D::vector(cen[0], cen[1], cen[2]);
-
-        // ##### Figure colour #####
-        // std::vector<double> color;
-        // bool isCol = figure["color"].as_double_tuple_if_exists(color);
-
-        // ##### Figure gradient #####
-        // std::vector<double> colGr = {0, 0, 0};
-        // bool isGr = figure["gradient"].as_double_tuple_if_exists(colGr);
-        // img::Color colorGr((uint8_t) (colGr[0]*255), (uint8_t) (colGr[1]*255), (uint8_t) (colGr[2]*255));
 
         fig::Figure* fig;
         bool isFract = false;

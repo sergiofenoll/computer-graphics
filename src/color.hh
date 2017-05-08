@@ -147,6 +147,22 @@ namespace col {
 
         virtual Vector3D get_location();
 
+        virtual void set_shadow_mask(ZBuffer& shadow_mask);
+
+        virtual ZBuffer get_shadow_mask();
+
+        virtual void set_shadow_mask_at(unsigned int x, unsigned int y, double val);
+
+        virtual double get_shadow_mask_at(unsigned int x, unsigned int y);
+
+        virtual void set_eye(Matrix& eye);
+
+        virtual Matrix get_eye();
+
+        virtual void set_values(double& d, double& dx, double& dy);
+
+        virtual void get_values(double& d, double& dx, double& dy);
+
         bool is_ambient();
 
         virtual bool is_diffuse_inf();
@@ -183,7 +199,21 @@ namespace col {
 
         virtual Vector3D get_location();
 
-        
+        virtual void set_shadow_mask(ZBuffer& shadow_mask);
+
+        virtual ZBuffer get_shadow_mask();
+
+        virtual void set_shadow_mask_at(unsigned int x, unsigned int y, double val);
+
+        virtual double get_shadow_mask_at(unsigned int x, unsigned int y);
+
+        virtual void set_eye(Matrix& eye);
+
+        virtual Matrix get_eye();
+
+        virtual void set_values(double& d, double& dx, double& dy);
+
+        virtual void get_values(double& d, double& dx, double& dy);
 
         virtual bool is_diffuse_inf();
 
