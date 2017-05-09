@@ -233,7 +233,15 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
                 light["diffuseLight"].as_fig_color_if_exists(l->diffuse());
                 light["specularLight"].as_fig_color_if_exists(l->specular());
                 l->set_location(location);
-                lights.push_back(l);
+                if (is_shadow) {
+                    int mask_size = 0;
+                    mask_size = general["shadowMask"].as_int_or_die();
+                    Matrix eyeL = eyePointTrans(location);
+                    l->set_mask_size(mask_size);
+                    l->set_eye(eyeL);
+                    lights[col::Shadow].push_back(l);
+                }
+                else lights[col::Point].push_back(l);
             }
         }
         else {
@@ -245,6 +253,7 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
     }
 
     fig::Figures figures;
+    Matrix eyeT = eyePointTrans(eye);
     for (unsigned int i = 0; i < nrFig; i++) {
         ini::Section figure = configuration["Figure" + std::to_string(i)];
         std::string type = figure["type"].as_string_or_die();
@@ -398,15 +407,13 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
         Matrix rotY = rotateY(rotYang);
         Matrix rotZ = rotateZ(rotZang);
         Matrix trsM = translate(center);
-        Matrix eyeT = eyePointTrans(eye);
         Matrix V = sclM * rotX * rotY * rotZ * trsM  * eyeT;
         fig->apply_transformation(V);
         unsigned int cur_iter = 1;
         if (isFract) fig::generate_fractal((*fig), figures, fractalScale, cur_iter, max_iter);
         else figures.push_back(fig);
     }
-    Matrix eyeT = eyePointTrans(eye);
-    for (auto& light : lights) {
+    for (auto& light : lights[col::Point]) {
         if (light->is_diffuse_inf()) {
             Vector3D direction = light->get_direction() * eyeT;
             Vector3D location = light->get_location() * eyeT;

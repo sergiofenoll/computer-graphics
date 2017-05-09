@@ -6,6 +6,7 @@
 #define COMPGRAPHX_COLOR_HH
 
 #include <vector>
+#include <map>
 #include <assert.h>
 #include "easy_image.hh"
 #include "vector.hh"
@@ -125,6 +126,11 @@ namespace col {
         double& operator()(unsigned int x, unsigned int y);
     };
 
+    enum LightType {
+        Normal,
+        Point
+    };
+
     class Light {
     private:
         Color ambient_light;
@@ -146,6 +152,10 @@ namespace col {
         virtual void set_location(Vector3D& location);
 
         virtual Vector3D get_location();
+
+        virtual void set_mask_size(int mask_size);
+
+        virtual int get_mask_size();
 
         virtual void set_shadow_mask(ZBuffer& shadow_mask);
 
@@ -189,6 +199,8 @@ namespace col {
     private:
         Vector3D location_vector;
 
+        int mask_size;
+
         ZBuffer shadow_mask;
 
         Matrix eye;
@@ -198,6 +210,10 @@ namespace col {
         virtual void set_location(Vector3D& location);
 
         virtual Vector3D get_location();
+
+        virtual void set_mask_size(int mask_size);
+
+        virtual int get_mask_size();
 
         virtual void set_shadow_mask(ZBuffer& shadow_mask);
 
@@ -220,7 +236,7 @@ namespace col {
         virtual bool is_diffuse_pnt();
     };
 
-    typedef std::vector<Light*> Lights;
+    typedef std::map<LightType, std::vector<Light*>> Lights;
 };
 
 

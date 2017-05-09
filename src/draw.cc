@@ -34,6 +34,18 @@ namespace drw {
                              (unsigned int) std::round(imageY),
                              img::Color(bc.red_int_value(), bc.green_int_value(), bc.blue_int_value()));
         col::ZBuffer* z_buffer;
+        for (auto light : lights) {
+            if (light->is_diffuse_pnt()) {
+                double shadowX = light->get_mask_size() * (xRange / maxXY);
+                double shadowY = light->get_mask_size() * (yRange / maxXY);
+                col::ZBuffer shadow_mask((unsigned int) std::round(shadowX), (unsigned int) std::round(shadowY));
+                double dL = 0.95 * (shadowX / xRange);
+                double dxL = (shadowX / 2.0) - DCx;
+                double dyL = (shadowY / 2.0) - DCy;
+                light->set_shadow_mask(shadow_mask);
+                light->set_values(dL, dxL, dyL);
+            }
+        }
         switch (type) {
             case Wires :
                 for(prj::Line &l : lines){
@@ -319,8 +331,7 @@ namespace drw {
         col::Color color_values = {0, 0, 0};
         Vector3D n = w;
         n.normalise();
-        std::vector<col::Light*> pnt_spc_lights;
-        for (auto& light : lights) {
+        for (auto& light : lights[col::Normal]) {
             if (light->is_ambient()) {
                 color_values += (ambientReflection * light->ambient());
             }
@@ -332,13 +343,6 @@ namespace drw {
                 double val = n.dot(l);
                 if (val > 0) cos_alpha = val;
                 color_values += (diffuseReflection * light->diffuse() * cos_alpha);
-            }
-            if (light->is_diffuse_pnt()) {
-                pnt_spc_lights.push_back(light);
-            }
-            if (light->is_specular() and
-                std::find(pnt_spc_lights.begin(), pnt_spc_lights.end(), light) == pnt_spc_lights.end()) {
-                pnt_spc_lights.push_back(light);
             }
         }
         img::Color color(color_values.red_int_value(), color_values.green_int_value(), color_values.blue_int_value());
@@ -389,21 +393,23 @@ namespace drw {
                     double zEye = 1.0 / z_inv;
                     double xEye = (xI - dx) * (-zEye) / d;
                     double yEye = (yI - dy) * (-zEye) / d;
-                    Vector3D P = Vector3D::point(xEye, yEye, zEye);
+                    Vector3D pEye = Vector3D::point(xEye, yEye, zEye);
+                    Vector3D P;
                     col::Color pnt_spec_color = color_values;
-                      for (auto light : pnt_spc_lights) {
+                    for (auto light : pnt_spc_lights) {
                         if (light->is_diffuse_inf()) {
                             l = Vector3D::normalise(-light->get_direction());
                         }
                         else {
-                            l = Vector3D::normalise(light->get_location() - P);
+                            l = Vector3D::normalise(light->get_location() - pEye);
+                            P = pEye * Matrix::inv(light->get_eye());
                         }
                         cos_alpha = n.dot(l);
                         cos_alpha =  cos_alpha < 0 ? 0 : cos_alpha;
                         pnt_spec_color += (diffuseReflection * light->diffuse()) * cos_alpha;
                         if (light->is_specular() && cos_alpha > 0) {
                             Vector3D r = Vector3D::normalise((2 * cos_alpha * n) + l);
-                            Vector3D cam = Vector3D::normalise(-P);
+                            Vector3D cam = Vector3D::normalise(-pEye);
                             double cos_beta = std::pow(r.dot(cam), reflectionCoeff);
                             cos_beta = cos_beta < 0 ? 0 : cos_beta;
                             pnt_spec_color += (specularReflection * light->specular()) * cos_beta;

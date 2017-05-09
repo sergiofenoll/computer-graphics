@@ -89,6 +89,7 @@ namespace fig {
     };
 
     class LineDrawing : public Figure {
+    public:
         LineDrawing(const ini::Configuration &configuration, unsigned int i);
     };
 

@@ -145,6 +145,12 @@ namespace col {
         return (*this).specular_light;
     }
 
+    void Light::set_mask_size(int) {}
+
+    int Light::get_mask_size() {
+        return 0;
+    }
+
     void Light::set_direction(Vector3D& direction) {}
 
     Vector3D Light::get_direction() {
@@ -217,6 +223,14 @@ namespace col {
 
     Vector3D PntLight::get_location() {
         return (*this).location_vector;
+    }
+
+    void PntLight::set_mask_size(int mask_size) {
+        (*this).mask_size = mask_size;
+    }
+
+    int PntLight::get_mask_size() {
+        return mask_size;
     }
 
     void PntLight::set_shadow_mask(ZBuffer& shadow_mask) {
