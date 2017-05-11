@@ -34,7 +34,7 @@ namespace drw {
                              (unsigned int) std::round(imageY),
                              img::Color(bc.red_int_value(), bc.green_int_value(), bc.blue_int_value()));
         col::ZBuffer* z_buffer;
-        for (auto light : lights) {
+        for (auto light : lights[col::Shadow]) {
             if (light->is_diffuse_pnt()) {
                 double shadowX = light->get_mask_size() * (xRange / maxXY);
                 double shadowY = light->get_mask_size() * (yRange / maxXY);
@@ -331,6 +331,7 @@ namespace drw {
         col::Color color_values = {0, 0, 0};
         Vector3D n = w;
         n.normalise();
+        std::set<col::Light*> pnt_spec_lights;
         for (auto& light : lights[col::Normal]) {
             if (light->is_ambient()) {
                 color_values += (ambientReflection * light->ambient());
@@ -344,6 +345,10 @@ namespace drw {
                 if (val > 0) cos_alpha = val;
                 color_values += (diffuseReflection * light->diffuse() * cos_alpha);
             }
+            if (light->is_diffuse_pnt())
+                pnt_spec_lights.insert(light);
+            if (light->is_specular())
+                pnt_spec_lights.insert(light);
         }
         img::Color color(color_values.red_int_value(), color_values.green_int_value(), color_values.blue_int_value());
 
@@ -396,13 +401,13 @@ namespace drw {
                     Vector3D pEye = Vector3D::point(xEye, yEye, zEye);
                     Vector3D P;
                     col::Color pnt_spec_color = color_values;
-                    for (auto light : pnt_spc_lights) {
+                    for (auto light : pnt_spec_lights) {
                         if (light->is_diffuse_inf()) {
-                            l = Vector3D::normalise(-light->get_direction());
+                            l = Vector3D::normalise(light->get_direction());
                         }
                         else {
                             l = Vector3D::normalise(light->get_location() - pEye);
-                            P = pEye * Matrix::inv(light->get_eye());
+                            // P = pEye * Matrix::inv(light->get_eye());
                         }
                         cos_alpha = n.dot(l);
                         cos_alpha =  cos_alpha < 0 ? 0 : cos_alpha;

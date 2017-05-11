@@ -222,7 +222,7 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
                 light["diffuseLight"].as_fig_color_if_exists(l->diffuse());
                 light["specularLight"].as_fig_color_if_exists(l->specular());
                 l->set_direction(direction);
-                lights.push_back(l);
+                lights[col::Normal].push_back(l);
             }
             else {
                 bool is_shadow; general["shadowEnabled"].as_bool_if_exists(is_shadow);
@@ -241,14 +241,14 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
                     l->set_eye(eyeL);
                     lights[col::Shadow].push_back(l);
                 }
-                else lights[col::Point].push_back(l);
+                else lights[col::Normal].push_back(l);
             }
         }
         else {
             l = new col::Light();
             light["ambientLight"].as_fig_color_if_exists(l->ambient());
             light["specularLight"].as_fig_color_if_exists(l->specular());
-            lights.push_back(l);
+            lights[col::Normal].push_back(l);
         }
     }
 
@@ -413,7 +413,7 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
         if (isFract) fig::generate_fractal((*fig), figures, fractalScale, cur_iter, max_iter);
         else figures.push_back(fig);
     }
-    for (auto& light : lights[col::Point]) {
+    for (auto& light : lights[col::Normal]) {
         if (light->is_diffuse_inf()) {
             Vector3D direction = light->get_direction() * eyeT;
             Vector3D location = light->get_location() * eyeT;
@@ -429,7 +429,10 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
     for (auto fig : figures) {
         delete fig;
     }
-    for (auto light : lights) {
+    for (auto light : lights[col::Normal]) {
+        delete light;
+    }
+    for (auto light : lights[col::Shadow]) {
         delete light;
     }
     return image;

@@ -128,7 +128,7 @@ namespace col {
 
     enum LightType {
         Normal,
-        Point
+        Shadow
     };
 
     class Light {
