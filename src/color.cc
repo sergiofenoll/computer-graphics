@@ -3,6 +3,7 @@
 //
 
 #include "color.hh"
+#include "figures.hh"
 
 namespace col {
 
@@ -127,6 +128,18 @@ namespace col {
         return z_buf[x][y];
     }
 
+    OpacityMatrix::OpacityMatrix() {}
+
+    OpacityMatrix::OpacityMatrix(const unsigned int& width, const unsigned int& height) {
+        std::vector<double> h(height, 1);
+        std::vector<std::vector<double>> w(width, h);
+        matrix = w;
+    }
+
+    double& OpacityMatrix::operator()(unsigned int x, unsigned int y) {
+        return matrix[x][y];
+    }
+
     Light::Light() {
         (*this).ambient_light = Color(0, 0, 0);
         (*this).diffuse_light = Color(0, 0, 0);
@@ -199,6 +212,10 @@ namespace col {
 
     bool Light::is_specular() {
         return !((*this).specular_light == Color(0, 0, 0));
+    }
+
+    bool Light::is_shadow() {
+        return false;
     }
 
     void InfLight::set_direction(Vector3D& direction) {
@@ -275,5 +292,9 @@ namespace col {
 
     bool PntLight::is_diffuse_pnt() {
         return true;
+    }
+
+    bool PntLight::is_shadow() {
+        return mask_size != 0;
     }
 }

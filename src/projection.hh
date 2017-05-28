@@ -42,7 +42,7 @@ namespace prj {
 
     typedef std::vector<Line> Lines;
 
-    Lines project_figures(const fig::Figures& figures);
+    Lines project_figures(fig::Figures& figures);
 
     void recursivePrintString(
             LParser::LSystem2D& l_system, std::string& print_string,

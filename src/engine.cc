@@ -189,10 +189,10 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
     if (general["type"].as_string_or_die() == "ZBufferedWireframe") fig_type = drw::ZBuff;
 
     // ##### ZBuffering with triangles #####
-    if (general["type"].as_string_or_die() == "ZBuffering") fig_type = drw::Trian;
+    if (general["type"].as_string_or_die() == "ZBuffering") fig_type = drw::Triangles;
 
     // ##### Lighted ZBuffering #####
-    if (general["type"].as_string_or_die() == "LightedZBuffering") fig_type = drw::Trian;
+    if (general["type"].as_string_or_die() == "LightedZBuffering") fig_type = drw::Triangles;
 
     // ##### Image size #####
     const unsigned int size = (const unsigned int) general["size"].as_double_or_die();
@@ -206,7 +206,7 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
     Vector3D eye = Vector3D::point(e[0], e[1], e[2]);
 
     // ##### Lights #####
-    int nrLights = 0; general["nrLights"].as_int_if_exists(nrLights);
+    int nrLights = general["nrLights"].as_int_or_default(0);
     col::Lights lights;
     for (unsigned int i = 0; i < nrLights; i++) {
         ini::Section light = configuration["Light" + std::to_string(i)];
@@ -225,7 +225,7 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
                 lights[col::Normal].push_back(l);
             }
             else {
-                bool is_shadow; general["shadowEnabled"].as_bool_if_exists(is_shadow);
+                bool is_shadow = general["shadowEnabled"].as_bool_or_default(false);
                 l = new col::PntLight();
                 std::vector<double> loc; light["location"].as_double_tuple_if_exists(loc);
                 Vector3D location = Vector3D::point(loc[0], loc[1], loc[2]);
@@ -234,8 +234,7 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
                 light["specularLight"].as_fig_color_if_exists(l->specular());
                 l->set_location(location);
                 if (is_shadow) {
-                    int mask_size = 0;
-                    mask_size = general["shadowMask"].as_int_or_die();
+                    int mask_size = general["shadowMask"].as_int_or_die();
                     Matrix eyeL = eyePointTrans(location);
                     l->set_mask_size(mask_size);
                     l->set_eye(eyeL);
@@ -250,6 +249,13 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
             light["specularLight"].as_fig_color_if_exists(l->specular());
             lights[col::Normal].push_back(l);
         }
+    }
+    if(lights[col::Normal].size() == 0 and lights[col::Shadow].size() == 0) {
+        col::Light* standard_light = new col::Light();
+        standard_light->ambient() = col::Color(1, 1, 1);
+        standard_light->diffuse() = col::Color(0, 0, 0);
+        standard_light->specular() = col::Color(0, 0, 0);
+        lights[col::Normal].push_back(standard_light);
     }
 
     fig::Figures figures;
@@ -269,11 +275,16 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
         Vector3D center = Vector3D::vector(cen[0], cen[1], cen[2]);
 
         fig::Figure* fig;
-        bool isFract = false;
-        double fractalScale;
-        unsigned int max_iter;
+        bool is_fract = false;
+        bool is_thick = false;
+        bool is_menger = false;
+        double fractalScale = 0;
+        unsigned int max_iter = 0;
+        double r_thick = 0;
+        unsigned int n_thick = 0;
+        unsigned int m_thick = 0;
         if (type=="LineDrawing"){
-            // fig = createLineDrawing(configuration, i);
+            fig = new fig::LineDrawing(configuration, i);
         }
         else if (type == "Cube"){
             fig = new fig::Cube();
@@ -302,7 +313,7 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
         }
         else if(type=="Sphere"){
             const unsigned int n = (const unsigned int) figure["n"].as_int_or_die();
-            double radius;
+            double radius = 1;
             fig = new fig::Sphere(radius, n);
         }
         else if(type=="Torus"){
@@ -321,7 +332,7 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
         }
         else if(type=="3DLSystem") {
             std::string inf = figure["inputfile"].as_string_or_die();
-            // Create 2D L-system
+            // Create 3D L-system
             LParser::LSystem3D l_system;
             std::ifstream input_stream(inf);
             if (type=="3DLSystemStoch") l_system.setStoch(true);
@@ -352,56 +363,143 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
             fractalScale = figure["fractalScale"].as_double_or_die();
             max_iter = (unsigned int) figure["nrIterations"].as_int_or_die();
             fig = new fig::Cube();
-            isFract = true;
+            is_fract = true;
         }
         else if (type == "FractalDodecahedron") { 
             fractalScale = figure["fractalScale"].as_double_or_die();
             max_iter = (unsigned int) figure["nrIterations"].as_int_or_die();
             fig = new fig::Dodecahedron();
-            isFract = true;
+            is_fract = true;
         }
         else if (type == "FractalIcosahedron") {
             fractalScale = figure["fractalScale"].as_double_or_die();
             max_iter = (unsigned int) figure["nrIterations"].as_int_or_die();
             fig = new fig::Icosahedron();
-            isFract = true;
+            is_fract = true;
         }
         else if (type == "FractalOctahedron") {
             fractalScale = figure["fractalScale"].as_double_or_die();
             max_iter = (unsigned int) figure["nrIterations"].as_int_or_die();
             fig = new fig::Octahedron();
-            isFract = true;
+            is_fract = true;
         }
         else if (type == "FractalTetrahedron") {
             fractalScale = figure["fractalScale"].as_double_or_die();
             max_iter = (unsigned int) figure["nrIterations"].as_int_or_die();
             fig = new fig::Tetrahedron();
-            isFract = true;
+            is_fract = true;
         }
         else if (type == "BuckyBall") {
             fig = new fig::Buckyball();
+            return img::EasyImage();
         }
         else if (type == "FractalBuckyBall") {
             fractalScale = figure["fractalScale"].as_double_or_die();
             max_iter = (unsigned int) figure["nrIterations"].as_int_or_die();
             fig = new fig::Buckyball();
-            isFract = true;
+            is_fract = true;
+            return img::EasyImage();
         }
         else if (type == "MengerSponge") {
             max_iter = (unsigned int) figure["nrIterations"].as_int_or_die();
             fig = new fig::Cube();
-            // fig.generateMengerSponge(fig, max_iter);
+            is_menger = true;
+        }
+        else if (type == "ThickLineDrawing") {
+            r_thick = figure["radius"].as_double_or_die();
+            n_thick = figure["n"].as_int_or_die();
+            m_thick = figure["m"].as_int_or_die();
+            fig = new fig::LineDrawing(configuration, i);
+            is_thick = true;
+        }
+        else if (type == "ThickCube") {
+            r_thick = figure["radius"].as_double_or_die();
+            n_thick = figure["n"].as_int_or_die();
+            m_thick = figure["m"].as_int_or_die();
+            fig = new fig::Cube();
+            is_thick = true;
+        }
+        else if (type == "ThickDodecahedron") {
+            r_thick = figure["radius"].as_double_or_die();
+            n_thick = figure["n"].as_int_or_die();
+            m_thick = figure["m"].as_int_or_die();
+            fig = new fig::Dodecahedron();
+            is_thick = true;
+        }
+        else if (type == "ThickIcosahedron") {
+            r_thick = figure["radius"].as_double_or_die();
+            n_thick = figure["n"].as_int_or_die();
+            m_thick = figure["m"].as_int_or_die();
+            fig = new fig::Icosahedron();
+            is_thick = true;
+        }
+        else if (type == "ThickOctahedron") {
+            r_thick = figure["radius"].as_double_or_die();
+            n_thick = figure["n"].as_int_or_die();
+            m_thick = figure["m"].as_int_or_die();
+            fig = new fig::Octahedron();
+            is_thick = true;
+        }
+        else if (type == "ThickTetrahedron") {
+            r_thick = figure["radius"].as_double_or_die();
+            n_thick = figure["n"].as_int_or_die();
+            m_thick = figure["m"].as_int_or_die();
+            fig = new fig::Tetrahedron();
+            is_thick = true;
+        }
+        else if (type == "Thick3DLSystem") {
+            r_thick = figure["radius"].as_double_or_die();
+            n_thick = figure["n"].as_int_or_die();
+            m_thick = figure["m"].as_int_or_die();
+
+            std::string inf = figure["inputfile"].as_string_or_die();
+            // Create 3D L-system
+            LParser::LSystem3D l_system;
+            std::ifstream input_stream(inf);
+            if (type=="3DLSystemStoch") l_system.setStoch(true);
+            input_stream >> l_system;
+            input_stream.close();
+            // Get values from 3D L-system
+            std::set<char> alph = l_system.get_alphabet();
+            std::string init = l_system.get_initiator();
+            unsigned int max_it = l_system.get_nr_iterations();
+            double delt_angle = (l_system.get_angle() / 360.0) * 2*PI;
+
+            std::stack<double> doubleStack;
+            std::stack<Vector3D> vectorStack;
+            unsigned int cur_it = 0;
+            double x = 0;
+            double y = 0;
+            double z = 0;
+            Vector3D H = Vector3D::vector(1, 0, 0);
+            Vector3D L = Vector3D::vector(0, 1, 0);
+            Vector3D U = Vector3D::vector(0, 0, 1);
+
+            fig = new fig::Figure();
+
+            prj::recursivePrintString(
+                    l_system, init, cur_it, max_it, delt_angle, (*fig), doubleStack, vectorStack, x, y, z, H, L, U);
+
+            is_thick = true;
+        }
+        else if (type == "ThickBuckyBall") {
+            r_thick = figure["radius"].as_double_or_die();
+            n_thick = figure["n"].as_int_or_die();
+            m_thick = figure["m"].as_int_or_die();
+            fig = new fig::Buckyball();
+            is_thick = true;
+            return img::EasyImage();
         }
         else {
-            std::cerr << "ERROR: Unknown figure.\n";
+            std::cerr << "Errot: Unknown figure.\n";
             fig = new fig::Figure();
         }
 
-        figure["color"].as_fig_color_if_exists(fig->ambient_reflection);
-        figure["ambientReflection"].as_fig_color_if_exists(fig->ambient_reflection);
-        figure["diffuseReflection"].as_fig_color_if_exists(fig->diffuse_reflection);
-        figure["specular_reflection"].as_fig_color_if_exists(fig->specular_reflection);
-        figure["reflectionCoefficient"].as_double_if_exists(fig->reflection_coefficient);
+        double opacity = 1;
+        bool is_opaque = figure["opacity"].as_double_if_exists(opacity);
+        if (is_opaque) fig_type = drw::Opaque;
+        fig->set_opacity(opacity);
+        fig->set_colors(figure);
         Matrix sclM = scaleFigure(scale);
         Matrix rotX = rotateX(rotXang);
         Matrix rotY = rotateY(rotYang);
@@ -410,22 +508,61 @@ img::EasyImage Wireframe(const ini::Configuration& configuration){
         Matrix V = sclM * rotX * rotY * rotZ * trsM  * eyeT;
         fig->apply_transformation(V);
         unsigned int cur_iter = 1;
-        if (isFract) fig::generate_fractal((*fig), figures, fractalScale, cur_iter, max_iter);
+        if (is_fract) fig::generate_fractal((*fig), figures, fractalScale, cur_iter, max_iter);
+        else if (is_thick) fig::generate_thick((*fig), figures, r_thick, n_thick, m_thick);
+        else if (is_menger) {
+            if (max_iter != 0) fig::generate_menger((*fig), figures, max_iter);
+            else figures.push_back(fig);
+        }
         else figures.push_back(fig);
     }
     for (auto& light : lights[col::Normal]) {
         if (light->is_diffuse_inf()) {
             Vector3D direction = light->get_direction() * eyeT;
-            Vector3D location = light->get_location() * eyeT;
             light->set_direction(direction);
-            light->set_location(location);
         }
         else if (light->is_diffuse_pnt()) {
             Vector3D location = light->get_location() * eyeT;
             light->set_location(location);
         }
     }
-    img::EasyImage image = drw::draw(figures, fig_type, lights, size, bc);
+    for (auto& light : lights[col::Shadow]) {
+        fig::Figures figures_copy;
+        for (auto orig_fig : figures) {
+            fig::Figure* fig = new fig::Figure(*orig_fig);
+            fig->apply_transformation(Matrix::inv(eyeT) * light->get_eye());
+            figures_copy.push_back(fig);
+        }
+        prj::Lines lines = prj::project_figures(figures_copy);
+        double maxX = lines[0].p1.x;
+        double maxY = lines[0].p1.y;
+        double minX = lines[0].p1.x;
+        double minY = lines[0].p1.y;
+        for (prj::Line &l : lines) {
+            maxX = std::max(std::max(l.p1.x, l.p2.x), maxX);
+            minX = std::min(std::min(l.p1.x, l.p2.x), minX);
+            maxY = std::max(std::max(l.p1.y, l.p2.y), maxY);
+            minY = std::min(std::min(l.p1.y, l.p2.y), minY);
+        }
+        double xRange = maxX - minX;
+        double yRange = maxY - minY;
+        double maxXY = std::max(xRange, yRange);
+        double shadowX = light->get_mask_size() * (xRange / maxXY);
+        double shadowY = light->get_mask_size() * (yRange / maxXY);
+        col::ZBuffer shadow_mask((unsigned int) shadowX,
+                                 (unsigned int) shadowY);
+        double dL = 0.95 * (shadowX / xRange);
+        double DCx = dL * ((minX + maxX) / 2.0);
+        double DCy = dL * ((minY + maxY) / 2.0);
+        double dxL = (shadowX / 2.0) - DCx;
+        double dyL = (shadowY / 2.0) - DCy;
+        light->set_shadow_mask(shadow_mask);
+        light->set_values(dL, dxL, dyL);
+        for (auto fig : figures_copy) {
+            delete fig;
+        }
+    }
+    img::EasyImage image = drw::draw(figures, fig_type, lights, eyeT, size, bc);
     for (auto fig : figures) {
         delete fig;
     }

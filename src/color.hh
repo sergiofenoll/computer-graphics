@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <map>
+#include <set>
 #include <assert.h>
 #include "easy_image.hh"
 #include "vector.hh"
@@ -126,6 +127,16 @@ namespace col {
         double& operator()(unsigned int x, unsigned int y);
     };
 
+    class OpacityMatrix {
+    // tfw std::vector<bool> is stupid and doesn't work as you'd expect
+    private:
+        std::vector<std::vector<double>> matrix;
+    public:
+        OpacityMatrix();
+        OpacityMatrix(const unsigned int& width, const unsigned int& height);
+        double& operator()(unsigned int x, unsigned int y);
+    };
+
     enum LightType {
         Normal,
         Shadow
@@ -180,6 +191,8 @@ namespace col {
         virtual bool is_diffuse_pnt();
 
         bool is_specular();
+
+        virtual bool is_shadow();
     };
 
     class InfLight : public Light {
@@ -234,6 +247,8 @@ namespace col {
         virtual bool is_diffuse_inf();
 
         virtual bool is_diffuse_pnt();
+
+        virtual bool is_shadow();
     };
 
     typedef std::map<LightType, std::vector<Light*>> Lights;

@@ -30,7 +30,7 @@ namespace prj {
         (*this).color=color;
     }
 
-    Lines project_figures(const fig::Figures& figures) {
+    Lines project_figures(fig::Figures& figures) {
         Lines lines;
         for (fig::Figure* figure : figures) {
             for (fig::Face& face : figure->faces) {

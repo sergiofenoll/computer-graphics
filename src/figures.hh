@@ -48,6 +48,7 @@ namespace fig {
         col::Color diffuse_reflection = {0, 0, 0};
         col::Color specular_reflection = {0, 0, 0};
         double reflection_coefficient;
+        double opacity = 1;
     public:
         bool operator==(const Figure& rhs);
 
@@ -83,6 +84,16 @@ namespace fig {
 
         double get_reflection() const;
 
+        void set_colors(const ini::Section& section);
+
+        void set_colors(Figure* other_figure);
+
+        void set_opacity(double& opacity);
+
+        double get_opacity() const;
+
+        bool is_opaque();
+
         void apply_transformation(const Matrix& m);
 
         void triangulate();
@@ -96,8 +107,6 @@ namespace fig {
     class Cube : public Figure {
     public:
         Cube();
-
-        void generate_menger(const unsigned int& max_it);
     };
 
     class Tetrahedron : public Figure {
@@ -132,7 +141,7 @@ namespace fig {
 
     class Cylinder : public Figure {
     public:
-        Cylinder(const double& height, const unsigned int& n);
+        Cylinder(const double& height, const unsigned int& n, bool top_and_bottom = true);
     };
 
     class Torus : public Figure {
@@ -149,6 +158,12 @@ namespace fig {
 
     void generate_fractal(
             Figure& figure, Figures& figures, const double& scale, unsigned int cur_it, const unsigned int& max_it);
+
+    void generate_thick(
+            Figure& figure, Figures& figures, const double& r, const unsigned int& n, const unsigned int& m);
+
+    void generate_menger(
+            Figure& figure, Figures& figures, const unsigned int& max_iter);
 }
 
 //Figure createSpecialSphere(const double &r, const double &R, const unsigned int &m, const unsigned int &n);

@@ -24,5 +24,5 @@ clean:
 	find . -name '*~'  -delete
 .PHONY: source
 source:
-	tar cf s0162303.tar.gz Makefile src/
+	tar cf s0162303.tar.gz Makefile src/ ext_input/ README.md
 

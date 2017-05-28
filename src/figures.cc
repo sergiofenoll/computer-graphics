@@ -34,7 +34,7 @@ namespace fig {
     unsigned int Face::operator[](const std::size_t idx) const {
         return point_indexes[idx];
     }
-    
+
     bool Figure::operator==(const Figure& rhs) {
         return ((*this).points == rhs.points) and
                ((*this).faces == rhs.faces);
@@ -98,7 +98,7 @@ namespace fig {
     }
     
     void Figure::set_specular(const col::Color& specular) {
-        (*this).specular_reflection;
+        (*this).specular_reflection = specular;
     }
     
     col::Color Figure::get_specular() const {
@@ -117,6 +117,35 @@ namespace fig {
         for(Vector3D &point : (*this).points){
             point *= m;
         }
+    }
+
+    void Figure::set_colors(const ini::Section& section) {
+        section["color"].as_fig_color_if_exists(ambient_reflection);
+        section["ambientReflection"].as_fig_color_if_exists(ambient_reflection);
+        section["diffuseReflection"].as_fig_color_if_exists(diffuse_reflection);
+        section["specularReflection"].as_fig_color_if_exists(specular_reflection);
+        section["reflectionCoefficient"].as_double_if_exists(reflection_coefficient);
+    }
+
+    void Figure::set_colors(Figure* other_figure) {
+        ambient_reflection = other_figure->ambient_reflection;
+        diffuse_reflection = other_figure->diffuse_reflection;
+        specular_reflection = other_figure->specular_reflection;
+        reflection_coefficient = other_figure->reflection_coefficient;
+    }
+
+    void Figure::set_opacity(double& opacity) {
+        assert(opacity >= 0.0);
+        assert(opacity <= 1.0);
+        (*this).opacity = opacity;
+    }
+
+    double Figure::get_opacity() const {
+        return opacity;
+    }
+
+    bool Figure::is_opaque() {
+        return opacity != 1;
     }
 
     void Figure::triangulate() {
@@ -177,99 +206,7 @@ namespace fig {
         Face f5({0, 5, 1, 4});
         faces = {f0, f1, f2, f3, f4, f5};
     }
-    
-    void Cube::generate_menger(const unsigned int& max_it) {
-        for (unsigned int i = 0; i < max_it; i++ ) {
-            /* VISUAL REPRESENTATION OF FACE DIVISION
-             *
-             * Originial face:
-             *
-             * 3 ------------- 2
-             * |               |
-             * |               |
-             * |               |
-             * |               |
-             * |               |
-             * 0 ------------- 1
-             *
-             * Divided face (view from front):
-             *
-             * 15 -- 13 -- 11 -- 10
-             * |  6  |  5  |  4  |
-             * 14 -- 12 -- 9 --- 8
-             * |  7  |     |  3  |
-             * 3 --- 2 --- 5 --- 7
-             * |  0  |  1  |  2  |
-             * 0 --- 1 --- 4 --- 6
-             *
-             * Divided face (center):
-             *
-             *     19--18
-             *   / |  / |
-             * 12 -- 9  |
-             * |  16-|-17
-             * | /   |/
-             * 2 --- 5
-             */
-            std::vector<Face> divided_faces;
-            std::vector<Vector3D> divided_points;
-            for (auto& face : faces) {
-                Vector3D p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19;
-                unsigned int i0, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15, i16, i17, i18, i19;
-    
-                // Assign corners
-                p0 = points[face[0]]; i0 = (unsigned int) divided_points.size();
-                p6 = points[face[1]]; i6 = i0 + 6;
-                p10 = points[face[2]]; i10 = i0 + 10;
-                p15 = points[face[3]]; i15 = i0 + 15;
-    
-                // Create outer points first
-                p1 = p0 + ((p6 - p0) / 3.0); i1 = i0 + 1;
-                p4 = p0 + (2.0 * (p6 - p0) / 3.0); i4 = i0 + 4;
-                p7 = p6 + ((p10 - p6) / 3.0); i7 = i0 + 7;
-                p8 = p6 + (2.0 * (p10 - p6) / 3.0); i8 = i0 + 8;
-                p13 = p15 + ((p10 - p15) / 3.0); i13 = i0 + 13;
-                p11 = p15 + (2.0 * (p10 - p15) / 3.0); i11 = i0 + 11;
-                p3 = p0 + ((p15 - p0) / 3.0); i3 = i0 + 3;
-                p14 = p0 + (2.0 * (p15 - p0) / 3.0); i14 = i0 + 14;
-    
-                // Create inner points
-                p2 = p3 + ((p7 - p3) / 3.0); i2 = i0 + 2;
-                p5 = p3 + (2.0 * (p7 - p3) / 3.0); i5 = i0 + 5;
-                p12 = p14 + ((p8 - p14) / 3.0); i12 = i0 + 12;
-                p9 = p14 + (2.0 * (p8 - p14) / 3.0); i9 = i0 + 9;
-    
-                // Create center points
-                p16 = p3.cross_equals(p1); i16 = i0 + 16;
-                p17 = p7.cross_equals(p4); i17 = i0 + 17;
-                p18 = p11.cross_equals(p8); i18 = i0 + 18;
-                p19 = p14.cross_equals(p13); i19 = i0 + 19;
-    
-                divided_points.insert(
-                        divided_points.end(),
-                        {p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19});
-                // Create faces
-                Face f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11;
-                f0 = {i0, i1, i2, i3};
-                f1 = {i1, i4, i5, i2};
-                f2 = {i4, i6, i7, i5};
-                f3 = {i5, i7, i8, i9};
-                f4 = {i9, i8, i10, i11};
-                f5 = {i12, i9, i11, i13};
-                f6 = {i14, i12, i13, i15};
-                f7 = {i3, i2, i12, i14};
-                f8 = {i2, i5, i17, i16};
-                f9 = {i5, i17, i18, i9};
-                f10 = {i9, i18, i19, i12};
-                f11 = {i2, i16, i9, i12};
-    
-                divided_faces.insert(divided_faces.end(), {f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11});
-            }
-            faces = divided_faces;
-            points = divided_points;
-        }
-    }
-    
+
     Tetrahedron::Tetrahedron() {
         Vector3D p0 = Vector3D::point(1, -1, -1);
         Vector3D p1 = Vector3D::point(-1, 1, -1);
@@ -279,7 +216,7 @@ namespace fig {
     
         Face f0({0, 1, 2});
         Face f1({1, 3, 2});
-        Face f2({0, 1, 3});
+        Face f2({0, 3, 1});
         Face f3({0, 2, 3});
         (*this).faces = {f0, f1, f2, f3};
     }
@@ -375,7 +312,7 @@ namespace fig {
         Face f8({18, 12, 11, 10, 17});
         Face f9({17, 10, 9, 8, 16});
         Face f10({16, 8, 7, 6, 15});
-        Face f11({15, 6, 7, 14, 19});
+        Face f11({15, 6, 5, 14, 19});
         (*this).faces = {f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11};
     }
 
@@ -429,6 +366,7 @@ namespace fig {
         }
         for (auto& point : fig.points) {
             point.normalise();
+            point *= radius;
         }
         (*this).points = fig.points;
         (*this).faces = fig.faces;
@@ -453,7 +391,7 @@ namespace fig {
         }
     }
 
-    Cylinder::Cylinder(const double& height, const unsigned int& n) {
+    Cylinder::Cylinder(const double& height, const unsigned int& n, bool top_and_bottom) {
         // Base points
         for (unsigned int i=0; i<n; i++) {
             Vector3D p = Vector3D::point(std::cos((2 * i * PI) / n),
@@ -462,11 +400,13 @@ namespace fig {
             (*this).points.push_back(p);
         }
         // Base face
-        Face fBase;
-        for (int i = (unsigned int) (*this).points.size() - 1; i >= 0; i--){
-            fBase.point_indexes.push_back((unsigned int) i);
+        if (top_and_bottom) {
+            Face fBase;
+            for (int i = (unsigned int) (*this).points.size() - 1; i >= 0; i--){
+                fBase.point_indexes.push_back((unsigned int) i);
+            }
+            (*this).faces.push_back(fBase);
         }
-        (*this).faces.push_back(fBase);
         // Top points
         for (unsigned int i = n; i < 2*n; i++){
             Vector3D p = Vector3D::point(std::cos((2 * i * PI) / n),
@@ -481,14 +421,13 @@ namespace fig {
             (*this).faces.push_back(f);
         }
         // Top face
-        Face fTop;
-//     for (unsigned int i = (unsigned int) fig.points.size() - 1; i >= n; i--){
-//         fTop.point_indexes.push_back(i);
-//     }
-        for (unsigned int i = n; i < (*this).points.size(); i++){
-            fTop.point_indexes.push_back(i);
+        if (top_and_bottom) {
+            Face fTop;
+            for (unsigned int i = n; i < (*this).points.size(); i++){
+                fTop.point_indexes.push_back(i);
+            }
+            (*this).faces.push_back(fTop);
         }
-        (*this).faces.push_back(fTop);
     }
 
     Torus::Torus(const double& r, const double& R, const unsigned int& m, const unsigned int& n) {
@@ -701,6 +640,94 @@ namespace fig {
             figures.push_back(&figure);
         }
     }
+
+    void generate_thick(
+            Figure& figure, Figures& figures, const double& r, const unsigned int& n, const unsigned int& m) {
+        for (auto& point : figure.points) {
+            Figure* sphere = new Sphere(r, m);
+            Matrix trans = translate(point);
+            sphere->apply_transformation(trans);
+            sphere->set_colors(&figure);
+            sphere->set_opacity(figure.opacity);
+            figures.push_back(sphere);
+        }
+        for (auto& line : figure.faces) {
+            int size = line.point_indexes.size();
+            for (int i = 0; i < size; i++) {
+                Vector3D p1 = figure.points[line[i]];
+                Vector3D p2 = figure.points[line[(i + 1) % size]];
+                Vector3D p = (p2 - p1);
+                double h = p.length() / r;
+                Figure* cylinder = new Cylinder(h, n, false);
+                Matrix scale = scaleFigure(r);
+                cylinder->apply_transformation(scale);
+                Vector3D pR = Vector3D::point(p.x, p.y, p.z);
+                double placeholder, theta, phi;
+                toPolar(pR, placeholder, theta, phi);
+                Matrix V = rotateY(phi) * rotateZ(theta) * translate(p1);
+                cylinder->apply_transformation(V);
+                cylinder->set_colors(&figure);
+                cylinder->set_opacity(figure.opacity);
+                figures.push_back(cylinder);
+            }
+        }
+    }
+
+    void generate_menger(
+            Figure& figure, Figures& figures, const unsigned int& max_iter) {
+        Figures cubes = {&figure};
+        for (unsigned int it = 0; it < max_iter; it++) {
+            Figures temp_cubes = cubes;
+            cubes = {};
+            for (auto fig : temp_cubes) {
+                Vectors3D inner_points = {
+                        (fig->points[0] + fig->points[4]) / 2,
+                        (fig->points[6] + fig->points[2]) / 2,
+                        (fig->points[6] + fig->points[0]) / 2,
+                        (fig->points[4] + fig->points[2]) / 2,
+                        (fig->points[4] + fig->points[1]) / 2,
+                        (fig->points[7] + fig->points[1]) / 2,
+                        (fig->points[7] + fig->points[2]) / 2,
+                        (fig->points[3] + fig->points[7]) / 2,
+                        (fig->points[3] + fig->points[6]) / 2,
+                        (fig->points[5] + fig->points[3]) / 2,
+                        (fig->points[5] + fig->points[0]) / 2,
+                        (fig->points[5] + fig->points[1]) / 2,
+                };
+                // Only generate one layer of cubes
+                if (it == max_iter - 1) generate_fractal((*fig), figures, 3, 1, 1);
+                else generate_fractal((*fig), cubes, 3, 1, 1);
+                for (unsigned int i = 0; i < inner_points.size(); i++) {
+                    Figure* fractal = new Figure(*fig);
+                    // Rescale fractal
+                    Matrix sclM = scaleFigure(1.0 / 3.0);
+                    fractal->apply_transformation(sclM);
+                    Vectors3D fractal_inner_points = {
+                            (fractal->points[0] + fractal->points[4]) / 2,
+                            (fractal->points[6] + fractal->points[2]) / 2,
+                            (fractal->points[6] + fractal->points[0]) / 2,
+                            (fractal->points[4] + fractal->points[2]) / 2,
+                            (fractal->points[4] + fractal->points[1]) / 2,
+                            (fractal->points[7] + fractal->points[1]) / 2,
+                            (fractal->points[7] + fractal->points[2]) / 2,
+                            (fractal->points[3] + fractal->points[7]) / 2,
+                            (fractal->points[3] + fractal->points[6]) / 2,
+                            (fractal->points[5] + fractal->points[3]) / 2,
+                            (fractal->points[5] + fractal->points[0]) / 2,
+                            (fractal->points[5] + fractal->points[1]) / 2,
+                    };
+                    // Move fractal
+                    Vector3D move;
+                    move = inner_points[i] - fractal_inner_points[i];
+                    Matrix trsM = translate(move);
+                    fractal->apply_transformation(trsM);
+                    // Add the fractal!
+                    if (it == max_iter - 1) figures.push_back(fractal);
+                    else cubes.push_back(fractal);
+                }
+            }
+        }
+    }
 }
 
 Matrix scaleFigure(const double& scale){
@@ -764,15 +791,24 @@ Matrix eyePointTrans(const Vector3D &eyepoint){
     double phi;
     toPolar(eyepoint, r, theta, phi);
     Matrix m;
-    m(1, 1) = -std::sin(theta);
-    m(1, 2) = -std::cos(theta) * std::cos(phi);
-    m(1, 3) = std::cos(theta) * std::sin(phi);
-    m(2, 1) = std::cos(theta);
-    m(2, 2) = -std::sin(theta) * std::cos(phi);
-    m(2, 3) = std::sin(theta) * std::sin(phi);
-    m(3, 2) = std::sin(phi);
-    m(3, 3) = std::cos(phi);
-    m(4, 3) = -r;
+    Vector3D trans = Vector3D::vector(0, 0, -r);
+    /*
+     * Sometimes, when using the old (commented out) method,
+     * if the eye point is (100, y, z) everything crashes,
+     * my house burns down and the apocalypse begins.
+     * Thanks Andrei for this bugfix!
+     */
+    m = rotateZ(-theta - (phi / 2.0)) * rotateX(-phi) * translate(trans);
+
+//    m(1, 1) = -std::sin(theta);
+//    m(1, 2) = -std::cos(theta) * std::cos(phi);
+//    m(1, 3) = std::cos(theta) * std::sin(phi);
+//    m(2, 1) = std::cos(theta);
+//    m(2, 2) = -std::sin(theta) * std::cos(phi);
+//    m(2, 3) = std::sin(theta) * std::sin(phi);
+//    m(3, 2) = std::sin(phi);
+//    m(3, 3) = std::cos(phi);
+//    m(4, 3) = -r;
     return m;
 }
 
@@ -806,100 +842,3 @@ Matrix eyePointTrans(const Vector3D &eyepoint){
     }
     return fig;
 } */
-
-//void generateMengerSponge(Figure& figure, const unsigned int& max_it) {
-//    for (unsigned int i = 0; i < max_it; i++ ) {
-//        /* VISUAL REPRESENTATION OF FACE DIVISION
-//         *
-//         * Originial face:
-//         *
-//         * 3 ------------- 2
-//         * |               |
-//         * |               |
-//         * |               |
-//         * |               |
-//         * |               |
-//         * 0 ------------- 1
-//         *
-//         * Divided face (view from front):
-//         *
-//         * 15 -- 13 -- 11 -- 10
-//         * |  6  |  5  |  4  |
-//         * 14 -- 12 -- 9 --- 8
-//         * |  7  |     |  3  |
-//         * 3 --- 2 --- 5 --- 7
-//         * |  0  |  1  |  2  |
-//         * 0 --- 1 --- 4 --- 6
-//         *
-//         * Divided face (center):
-//         *
-//         *     19--18
-//         *   / |  / |
-//         * 12 -- 9  |
-//         * |  16-|-17
-//         * | /   |/
-//         * 2 --- 5
-//         */
-//        std::vector<Face> divided_faces;
-//        std::vector<Vector3D> divided_points;
-//        for (auto& face : figure.faces) {
-//            Vector3D p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19;
-//            unsigned int i0, i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15, i16, i17, i18, i19;
-//
-//            // Assign corners
-//            p0 = figure.points[face.point_indexes[0]]; i0 = (unsigned int) divided_points.size();
-//            p6 = figure.points[face.point_indexes[1]]; i6 = i0 + 6;
-//            p10 = figure.points[face.point_indexes[2]]; i10 = i0 + 10;
-//            p15 = figure.points[face.point_indexes[3]]; i15 = i0 + 15;
-//
-//            // Create outer points first
-//            p1 = p0 + ((p6 - p0) / 3.0); i1 = i0 + 1;
-//            p4 = p0 + (2.0 * (p6 - p0) / 3.0); i4 = i0 + 4;
-//            p7 = p6 + ((p10 - p6) / 3.0); i7 = i0 + 7;
-//            p8 = p6 + (2.0 * (p10 - p6) / 3.0); i8 = i0 + 8;
-//            p13 = p15 + ((p10 - p15) / 3.0); i13 = i0 + 13;
-//            p11 = p15 + (2.0 * (p10 - p15) / 3.0); i11 = i0 + 11;
-//            p3 = p0 + ((p15 - p0) / 3.0); i3 = i0 + 3;
-//            p14 = p0 + (2.0 * (p15 - p0) / 3.0); i14 = i0 + 14;
-//
-//            // Create inner points
-//            p2 = p3 + ((p7 - p3) / 3.0); i2 = i0 + 2;
-//            p5 = p3 + (2.0 * (p7 - p3) / 3.0); i5 = i0 + 5;
-//            p12 = p14 + ((p8 - p14) / 3.0); i12 = i0 + 12;
-//            p9 = p14 + (2.0 * (p8 - p14) / 3.0); i9 = i0 + 9;
-//
-//            // Create center points
-////            p16 = (p3 - p2).cross_equals((p1 - p2)); i16 = i0 + 16;
-////            p17 = (p7 - p5).cross_equals((p4 - p5)); i17 = i0 + 17;
-////            p18 = (p11 - p9).cross_equals((p8 - p9)); i18 = i0 + 18;
-////            p19 = (p14 - p12).cross_equals((p13 - p12)); i19 = i0 + 19;
-//
-//            p16 = p3.cross_equals(p1); i16 = i0 + 16;
-//            p17 = p7.cross_equals(p4); i17 = i0 + 17;
-//            p18 = p11.cross_equals(p8); i18 = i0 + 18;
-//            p19 = p14.cross_equals(p13); i19 = i0 + 19;
-//
-//            divided_points.insert(
-//                    divided_points.end(),
-//                    {p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19});
-//            // Create faces
-//            Face f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11;
-//            f0 = {i0, i1, i2, i3};
-//            f1 = {i1, i4, i5, i2};
-//            f2 = {i4, i6, i7, i5};
-//            f3 = {i5, i7, i8, i9};
-//            f4 = {i9, i8, i10, i11};
-//            f5 = {i12, i9, i11, i13};
-//            f6 = {i14, i12, i13, i15};
-//            f7 = {i3, i2, i12, i14};
-//            f8 = {i2, i5, i17, i16};
-//            f9 = {i5, i17, i18, i9};
-//            f10 = {i9, i18, i19, i12};
-//            f11 = {i2, i16, i9, i12};
-//
-//            divided_faces.insert(divided_faces.end(), {f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11});
-//        }
-//        figure.faces = divided_faces;
-//        figure.points = divided_points;
-//    }
-//}
