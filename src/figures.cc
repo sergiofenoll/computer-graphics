@@ -791,24 +791,15 @@ Matrix eyePointTrans(const Vector3D &eyepoint){
     double phi;
     toPolar(eyepoint, r, theta, phi);
     Matrix m;
-    Vector3D trans = Vector3D::vector(0, 0, -r);
-    /*
-     * Sometimes, when using the old (commented out) method,
-     * if the eye point is (100, y, z) everything crashes,
-     * my house burns down and the apocalypse begins.
-     * Thanks Andrei for this bugfix!
-     */
-    m = rotateZ(-theta - (phi / 2.0)) * rotateX(-phi) * translate(trans);
-
-//    m(1, 1) = -std::sin(theta);
-//    m(1, 2) = -std::cos(theta) * std::cos(phi);
-//    m(1, 3) = std::cos(theta) * std::sin(phi);
-//    m(2, 1) = std::cos(theta);
-//    m(2, 2) = -std::sin(theta) * std::cos(phi);
-//    m(2, 3) = std::sin(theta) * std::sin(phi);
-//    m(3, 2) = std::sin(phi);
-//    m(3, 3) = std::cos(phi);
-//    m(4, 3) = -r;
+    m(1, 1) = -std::sin(theta);
+    m(1, 2) = -std::cos(theta) * std::cos(phi);
+    m(1, 3) = std::cos(theta) * std::sin(phi);
+    m(2, 1) = std::cos(theta);
+    m(2, 2) = -std::sin(theta) * std::cos(phi);
+    m(2, 3) = std::sin(theta) * std::sin(phi);
+    m(3, 2) = std::sin(phi);
+    m(3, 3) = std::cos(phi);
+    m(4, 3) = -r;
     return m;
 }
 
