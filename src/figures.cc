@@ -791,6 +791,15 @@ Matrix eyePointTrans(const Vector3D &eyepoint){
     double phi;
     toPolar(eyepoint, r, theta, phi);
     Matrix m;
+    // m = rotateZ(-theta - (PI / 2.0)) * rotateX(-phi) * translate(Vector3D::vector(0, 0, -r));
+
+    /*
+     * This code causes segfaults, burning homes and XK-Class apocalyptic events.
+     * The above line was supposed to fix that, but it didn't.
+     * It is left there for posterity.
+     * Thanks Andrei for the (almost but not) bugfix!
+     */
+
     m(1, 1) = -std::sin(theta);
     m(1, 2) = -std::cos(theta) * std::cos(phi);
     m(1, 3) = std::cos(theta) * std::sin(phi);
